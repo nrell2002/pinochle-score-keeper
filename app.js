@@ -143,7 +143,7 @@ class PinochleScoreKeeper {
         playerSelection.innerHTML = `
             <h4>Select ${gameType} Players:</h4>
             ${this.players.map((player, index) => `
-                <div class="player-item" onclick="this.classList.toggle('selected')" data-player-id="${player.id}">
+                <div class="player-item" data-player-id="${player.id}">
                     <div class="player-name">${player.name}</div>
                 </div>
             `).join('')}
