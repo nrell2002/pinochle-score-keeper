@@ -69,33 +69,52 @@
                             <span>Hand: <span id="current-hand">1</span></span>
                             <span>Target Score: <span id="target-score">1500</span></span>
                         </div>
+                        <div id="dealer-display" style="margin-top:8px; font-weight:bold;"></div>
                     </div>
-                    
-                    <div class="card">
-                        <h3>Current Hand</h3>
+
+                    <!-- Hand Start Section -->
+                    <div id="hand-start-section" class="card">
+                        <h3>Start Hand</h3>
+                        <div id="current-dealer-hand" style="margin-bottom:8px; font-weight:bold;"></div>
                         <div class="input-group">
                             <label for="winning-bid">Winning Bid:</label>
-                            <input type="number" id="winning-bid" min="20" step="1" placeholder="e.g., 21">
+                            <input type="number" id="winning-bid" min="20" step="10" placeholder="e.g., 200">
                             <label for="bidder">Bidder:</label>
                             <select id="bidder">
                                 <!-- Options will be populated dynamically -->
                             </select>
                         </div>
-                        
+                        <button id="next-to-meld" class="primary-button">Next</button>
+                        <button id="throw-in-hand" class="secondary-button" style="margin-left:8px;">Throw In Hand (No Bids)</button>
+                    </div>
+
+                    <!-- Meld Section (hidden until Next is clicked) -->
+                    <div id="meld-section-card" class="card hidden">
+                        <h3>Meld Entry</h3>
+                        <div style="margin-bottom:8px;font-weight:bold;">Winning Bid: <span id="meld-winning-bid"></span></div>
                         <div id="meld-section" class="meld-section">
                             <h4>Meld Points</h4>
                             <div id="meld-inputs">
                                 <!-- Meld inputs will be generated dynamically -->
                             </div>
                         </div>
-                        
+                        <button id="next-to-score" class="primary-button">Next</button>
+                    </div>
+
+                    <!-- Hand Score Section (hidden until meld is submitted) -->
+                    <div id="score-section-card" class="card hidden">
+                        <h3>Hand Score Entry</h3>
+                        <div style="margin-bottom:8px;font-weight:bold;">Winning Bid: <span id="score-winning-bid"></span></div>
+                        <div style="margin-bottom:8px;font-weight:bold;">Tricks Required: <span id="score-tricks-required"></span></div>
                         <div id="score-section" class="score-section">
-                            <h4>Hand Scores</h4>
+                            <h4>Tricks Won (Max 25 total)</h4>
                             <div id="score-inputs">
-                                <!-- Score inputs will be generated dynamically -->
+                                <!-- Trick inputs will be generated dynamically -->
                             </div>
                         </div>
-                        
+                        <div id="moon-options" style="display:none; margin-bottom:8px;">
+                            <button id="shot-the-moon" class="primary-button">Shot the Moon</button>
+                        </div>
                         <button id="submit-hand" class="primary-button">Submit Hand</button>
                     </div>
                     
@@ -103,6 +122,8 @@
                         <h3>Scoreboard</h3>
                         <div id="scoreboard" class="scoreboard">
                             <!-- Scoreboard will be dynamically generated -->
+                        </div>
+                        <button id="edit-scores" class="secondary-button" style="margin-top:12px;">Edit Scores</button>
                         </div>
                     </div>
                     
