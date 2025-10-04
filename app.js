@@ -567,6 +567,31 @@ class PinochleScoreKeeper {
         this.showToast(`Hand ${handData.handNumber} recorded`);
     }
 
+    checkGameEnd() {
+        if (!this.currentGame) return;
+        
+        // Check if any player has reached the target score
+        const targetScore = this.currentGame.targetScore;
+        const winningPlayers = this.currentGame.scores.filter(s => s.score >= targetScore);
+        
+        if (winningPlayers.length > 0) {
+            // Find the player with the highest score among those who reached target
+            const winner = winningPlayers.reduce((prev, current) => 
+                (prev.score > current.score) ? prev : current
+            );
+            
+            // Show game completion notification
+            this.showToast(`🎉 ${winner.name} wins with ${winner.score} points!`, 'success');
+            
+            // Auto-end the game after a short delay to let the user see the final scores
+            setTimeout(() => {
+                if (confirm(`${winner.name} has reached ${targetScore} points and wins the game!\n\nWould you like to end the game now?`)) {
+                    this.endGame();
+                }
+            }, 1500);
+        }
+    }
+
     endGame() {
         if (!this.currentGame) return;
         
