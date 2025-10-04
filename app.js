@@ -658,7 +658,7 @@ class PinochleScoreKeeper {
             `;
         }).join('');
     }
-        // Show score editing UI
+    // Show score editing UI
     showEditScores() {
         if (!this.currentGame) return;
         // Create a modal or inline form for editing scores
