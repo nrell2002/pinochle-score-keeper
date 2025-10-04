@@ -100,9 +100,8 @@ class NotificationService {
             // Set base styles
             Object.assign(this.toastElement.style, {
                 position: 'fixed',
-                bottom: '30px',
-                left: '50%',
-                transform: 'translateX(-50%)',
+                top: '20px',
+                right: '20px',
                 zIndex: '9999',
                 padding: '12px 24px',
                 borderRadius: '6px',
@@ -110,9 +109,10 @@ class NotificationService {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 opacity: '0',
                 transition: 'opacity 0.3s ease',
-                maxWidth: '90%',
+                maxWidth: '300px',
                 textAlign: 'center',
-                fontWeight: '500'
+                fontWeight: '500',
+                pointerEvents: 'none'
             });
             
             document.body.appendChild(this.toastElement);
