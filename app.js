@@ -423,9 +423,7 @@ class PinochleScoreKeeper {
     document.getElementById('next-to-score').addEventListener('click', () => this.nextToScorePhase());
     document.getElementById('submit-hand').addEventListener('click', () => this.submitHand());
     document.getElementById('edit-scores').addEventListener('click', () => this.showEditScores());
-    const throwHandBtn = document.getElementById('throw-hand');
     const shotMoonBtn = document.getElementById('shot-the-moon');
-    if (throwHandBtn) throwHandBtn.addEventListener('click', () => this.throwHandMoon());
     if (shotMoonBtn) shotMoonBtn.addEventListener('click', () => this.shotTheMoon());
         document.getElementById('end-game').addEventListener('click', () => this.endGame());
         document.getElementById('throw-in-hand').addEventListener('click', () => this.throwInHand());
