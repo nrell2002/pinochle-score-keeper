@@ -480,7 +480,7 @@ class PinochleScoreKeeper {
             const tricks = parseInt(document.getElementById(`score-${player.id}`).value) || 0;
             if (meld % 10 !== 0) {
                 this.showToast('Meld values must be divisible by 10.','error');
-                return;
+                continue;
             }
             // Non-winning players meld safety logic
             let ninesOnly = false;
