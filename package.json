@@ -1,0 +1,27 @@
+{
+  "name": "pinochle-score-keeper",
+  "version": "1.0.0",
+  "description": "A responsive web application for keeping track of pinochle game scores and player statistics",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "lint": "eslint src/**/*.js",
+    "test": "echo \"No tests specified yet\" && exit 0"
+  },
+  "keywords": [
+    "pinochle",
+    "card-game",
+    "score-keeper",
+    "game-tracker"
+  ],
+  "author": "nrell2002",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nrell2002/pinochle-score-keeper.git"
+  },
+  "homepage": "https://github.com/nrell2002/pinochle-score-keeper#readme"
+}

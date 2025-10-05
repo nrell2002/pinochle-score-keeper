@@ -1,0 +1,310 @@
+# 🃏 Pinochle Score Keeper - Architecture Documentation
+
+## Refactored Modular Architecture
+
+This application has been refactored from a monolithic vanilla JavaScript application into a modern, modular architecture suitable for team development and marketplace deployment.
+
+## Architecture Overview
+
+### Directory Structure
+```
+src/
+├── models/           # Data models and business logic
+│   ├── Player.js     # Player model with statistics
+│   ├── Game.js       # Game state and logic
+│   └── GameHand.js   # Individual hand tracking
+├── services/         # Shared services and utilities
+│   ├── StorageService.js      # Local storage management
+│   ├── NotificationService.js # Toast notifications
+│   └── EventService.js        # Pub/sub event system
+├── controllers/      # UI controllers and logic
+│   ├── PlayerController.js    # Player management
+│   ├── GameController.js      # Game flow and logic
+│   ├── UIController.js        # Navigation and tabs
+│   └── StatsController.js     # Statistics display
+├── utils/           # Utility functions and configuration
+│   ├── config.js    # App configuration and constants
+│   └── helpers.js   # DOM helpers, validation, formatting
+└── App.js           # Main application orchestrator
+```
+
+## Key Architectural Improvements
+
+### 1. Separation of Concerns
+- **Models**: Business logic and data validation
+- **Services**: Cross-cutting concerns (storage, notifications, events)
+- **Controllers**: UI logic and user interactions
+- **Utilities**: Reusable helper functions
+
+### 2. Event-Driven Architecture
+- Pub/sub pattern using EventService
+- Loose coupling between components
+- Easy to extend with new features
+
+### 3. Service Layer
+- Centralized storage management
+- Consistent notification system
+- Configuration management
+
+### 4. Type Safety & Documentation
+- Comprehensive JSDoc documentation
+- Clear interfaces and contracts
+- Runtime validation
+
+## Design Patterns Used
+
+### Model-View-Controller (MVC)
+- **Models**: Player, Game, GameHand
+- **Views**: HTML templates and DOM manipulation
+- **Controllers**: PlayerController, GameController, etc.
+
+### Observer Pattern
+- EventService for component communication
+- Automatic UI updates on data changes
+
+### Singleton Pattern
+- Services are singleton instances
+- Shared configuration and state
+
+### Factory Pattern
+- Model creation from stored data
+- Validation and type conversion
+
+## Key Benefits
+
+### For Development Teams
+- **Modularity**: Each feature can be developed independently
+- **Testability**: Isolated components are easier to unit test
+- **Maintainability**: Clear separation makes debugging easier
+- **Extensibility**: New features can be added without affecting existing code
+
+### For Deployment
+- **Scalability**: Architecture supports feature flags and progressive enhancement
+- **Performance**: Lazy loading potential for larger feature sets
+- **Browser Support**: Graceful degradation for older browsers
+- **PWA Ready**: Service workers can be easily integrated
+
+## Usage Examples
+
+### Adding New Features
+```javascript
+// 1. Create a new model (if needed)
+class Tournament extends Game { /* ... */ }
+
+// 2. Create a service (if needed)
+class TournamentService { /* ... */ }
+
+// 3. Create a controller
+class TournamentController {
+    constructor(playerController, gameController) {
+        this.playerController = playerController;
+        this.gameController = gameController;
+        this.init();
+    }
+    // ... implementation
+}
+
+// 4. Register with main app
+// In App.js:
+this.controllers.tournament = new TournamentController(
+    this.controllers.player, 
+    this.controllers.game
+);
+```
+
+### Event Communication
+```javascript
+// Listen for game events
+eventService.on(EVENTS.GAME_ENDED, (game) => {
+    // Update tournament standings
+    this.updateTournamentStandings(game);
+});
+
+// Emit custom events
+eventService.emit('tournament:started', tournamentData);
+```
+
+### Configuration Management
+```javascript
+// Add new game types
+export const GAME_TYPES = [
+    ...existing,
+    {
+        players: 6,
+        name: '6-Player Tournament',
+        targetScore: 2000,
+        minBid: 300,
+        description: 'Large tournament format'
+    }
+];
+```
+
+## Browser Compatibility
+
+### Modern Browsers (Recommended)
+- Chrome 80+
+- Firefox 75+
+- Safari 13+
+- Edge 80+
+
+**Features**: Full ES6 module support, all functionality available
+
+### Legacy Browsers (Compatibility Mode)
+- Internet Explorer 11
+- Chrome 60-79
+- Firefox 60-74
+
+**Features**: Basic player management, limited game functionality
+
+## Migration from Legacy Code
+
+The refactoring maintains full backward compatibility:
+
+1. **Legacy app.js**: Preserved as `app-legacy.js`
+2. **Compatibility layer**: Automatic fallback for unsupported browsers  
+3. **Data migration**: Existing localStorage data works seamlessly
+4. **API compatibility**: Global references maintained for debugging
+
+## Development Setup
+
+### Prerequisites
+- Modern web browser with ES6 module support
+- Python 3 (for development server)
+- Git
+
+### Getting Started
+```bash
+# Start development server
+npm run dev
+# or
+python3 -m http.server 8080
+
+# Access application
+open http://localhost:8080
+```
+
+### Development Tools
+```bash
+# Install development dependencies
+npm install
+
+# Run linting (when available)
+npm run lint
+
+# Run tests (when implemented)
+npm run test
+```
+
+## Configuration
+
+Key configuration options in `src/utils/config.js`:
+
+```javascript
+export const CONFIG = {
+    GAME: {
+        TARGET_SCORES: { 2: 1000, 3: 1500, 4: 1500 },
+        MIN_BIDS: { 2: 150, 3: 250, 4: 250 }
+    },
+    UI: {
+        NOTIFICATION_DURATION: 2200,
+        DEFAULT_TAB: 'players'
+    },
+    FEATURES: {
+        OFFLINE_SUPPORT: true,
+        DATA_EXPORT: true,
+        TOURNAMENT_MODE: false  // Future feature
+    }
+};
+```
+
+## Testing Strategy
+
+### Unit Testing (Recommended)
+- Test individual models and services
+- Mock dependencies for isolation
+- Use Jest or similar framework
+
+### Integration Testing
+- Test controller interactions
+- Validate event flows
+- Test data persistence
+
+### E2E Testing
+- Full user workflows
+- Cross-browser compatibility
+- Performance testing
+
+## Future Enhancements
+
+The new architecture enables:
+
+### Immediate Opportunities
+- [ ] Unit test suite
+- [ ] TypeScript migration
+- [ ] Build system (Webpack/Vite)
+- [ ] Code splitting and lazy loading
+
+### Feature Additions
+- [ ] Tournament mode
+- [ ] Online multiplayer
+- [ ] Advanced statistics
+- [ ] Theme customization
+- [ ] Data export/import improvements
+- [ ] Offline PWA capabilities
+
+### Marketplace Readiness
+- [ ] User authentication
+- [ ] Cloud data sync
+- [ ] Premium features
+- [ ] Analytics integration
+- [ ] Error monitoring
+- [ ] Performance optimization
+
+## Contributing
+
+### Code Style
+- Use ES6+ features
+- Follow existing naming conventions
+- Add JSDoc documentation
+- Emit appropriate events for major actions
+
+### Adding Features
+1. Create feature branch
+2. Implement models/services first
+3. Add controllers and UI
+4. Update configuration if needed
+5. Add tests
+6. Update documentation
+
+## Performance Considerations
+
+### Load Time
+- ES6 modules load asynchronously
+- Only core functionality loads initially
+- Services lazy-initialize when needed
+
+### Memory Usage
+- Event listeners properly cleaned up
+- Controllers can be destroyed/recreated
+- localStorage managed efficiently
+
+### Runtime Performance
+- Efficient DOM manipulation
+- Event delegation where appropriate
+- Validation happens at model level
+
+## Security Considerations
+
+### Data Storage
+- All data stored locally
+- No sensitive information in localStorage
+- Input validation at multiple layers
+
+### XSS Protection
+- DOM manipulation uses textContent where possible
+- Input sanitization in models
+- No eval() or similar dangerous patterns
+
+---
+
+This architecture provides a solid foundation for scaling the Pinochle Score Keeper into a full-featured, team-developed application suitable for marketplace deployment.
