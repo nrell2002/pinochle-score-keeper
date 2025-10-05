@@ -58,17 +58,17 @@ describe('StorageService', () => {
     });
 
     test('getStorageInfo returns usage info', () => {
-  jest.spyOn(storageService, 'isAvailable').mockReturnValue(true);
-  localStorage.getItem.mockReturnValueOnce('abc').mockReturnValueOnce('defg').mockReturnValueOnce(null);
-  const info = storageService.getStorageInfo();
-  expect(info.available).toBe(true);
-  expect(info.usage.players).toBe(3);
-  expect(info.usage.current_game).toBe(4);
-  expect(info.usage.game_history).toBe(0);
-  expect(info.totalSize).toBe(7);
-  // Calculate expected KB value based on implementation
-  const expectedKB = Math.round(7 / 1024 * 100) / 100;
-  expect(info.totalSizeKB).toBeCloseTo(expectedKB, 2);
+    jest.spyOn(storageService, 'isAvailable').mockReturnValue(true);
+    localStorage.getItem.mockReturnValueOnce('abc').mockReturnValueOnce('defg').mockReturnValueOnce(null);
+    const info = storageService.getStorageInfo();
+    expect(info.available).toBe(true);
+    expect(info.usage.players).toBe(3);
+    expect(info.usage.current_game).toBe(4);
+    expect(info.usage.game_history).toBe(0);
+    expect(info.totalSize).toBe(7);
+    // Calculate expected KB value based on implementation
+    const expectedKB = Math.round(7 / 1024 * 100) / 100;
+    expect(info.totalSizeKB).toBeCloseTo(expectedKB, 2);
     });
   });
   beforeEach(() => {
