@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "python3 -m http.server 8080",
     "lint": "eslint src/**/*.js",
-    "test": "echo \"No tests specified yet\" && exit 0"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "pinochle",
@@ -17,7 +19,13 @@
   "author": "nrell2002",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^8.0.0"
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3",
+    "babel-jest": "^30.2.0",
+    "eslint": "^8.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "jsdom": "^27.0.0"
   },
   "repository": {
     "type": "git",
