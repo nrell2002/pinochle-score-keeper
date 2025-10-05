@@ -2,7 +2,7 @@
  * Event service for implementing pub/sub pattern
  * Allows loose coupling between application components
  */
-class EventService {
+export class EventService {
     constructor() {
         this.listeners = new Map();
     }
