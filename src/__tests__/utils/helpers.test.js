@@ -174,7 +174,7 @@ describe('Validation Utilities', () => {
     test('should reject invalid player names', () => {
       const invalidCases = [
         { input: null, error: 'Name is required' },
-        { input: '', error: 'Name is required' }, // Empty string is falsy
+        { input: '', error: 'Name is required' }, // Empty string should be treated as 'Name is required'
         { input: '   ', error: 'Name cannot be empty' },
         { input: 'a'.repeat(51), error: 'Name is too long (max 50 characters)' },
         { input: 'Player@123', error: 'Name contains invalid characters' },
