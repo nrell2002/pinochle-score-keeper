@@ -300,7 +300,7 @@ class PinochleScoreKeeper {
             let checkbox = '';
             // Only show checkbox for non-winning players
             if (!this._pendingHand || p.id !== this._pendingHand.bidderId) {
-                checkbox = `<label style="margin-left:8px;"><input type="checkbox" id="nines-only-${p.id}"> Only 9's of trump?</label>`;
+                checkbox = `<label style="margin-left:8px; display: none;" id="nines-label-${p.id}"><input type="checkbox" id="nines-only-${p.id}"> Only 9's of trump?</label>`;
             }
             return `
                 <div class="player-input">
@@ -310,6 +310,21 @@ class PinochleScoreKeeper {
                 </div>
             `;
         }).join('');
+        
+        // Add event listeners to meld inputs for dynamic checkbox visibility
+        this.currentGame.players.forEach(p => {
+            if (!this._pendingHand || p.id !== this._pendingHand.bidderId) {
+                const meldInput = document.getElementById(`meld-${p.id}`);
+                if (meldInput) {
+                    meldInput.addEventListener('input', () => {
+                        this.toggleNinesCheckboxLegacy(p.id);
+                    });
+                    // Initialize checkbox visibility
+                    this.toggleNinesCheckboxLegacy(p.id);
+                }
+            }
+        });
+        
         scoreInputs.innerHTML = this.currentGame.players.map(p => `
             <div class="player-input">
                 <label>${p.name} Tricks:</label>
@@ -319,6 +334,43 @@ class PinochleScoreKeeper {
 
         this.updateScoreboard();
     }
+    
+    /**
+     * Toggle visibility of 9's checkbox based on meld value and game type (legacy version)
+     * @param {string} playerId - Player ID
+     */
+    toggleNinesCheckboxLegacy(playerId) {
+        if (!this.currentGame) return;
+        
+        const meldInput = document.getElementById(`meld-${playerId}`);
+        const ninesLabel = document.getElementById(`nines-label-${playerId}`);
+        
+        if (!meldInput || !ninesLabel) return;
+        
+        const meldValue = parseInt(meldInput.value) || 0;
+        const gameType = this.currentGame.players.length;  // In legacy, infer from player count
+        
+        // Show checkbox only if meld value could be made up of only 9's of trump
+        let shouldShow = false;
+        if (gameType === 2) {
+            // 2-player: only 1 nine of trump (max 10 points)
+            shouldShow = (meldValue === 10);
+        } else {
+            // 3/4-player: 2 nines of trump (max 20 points)
+            shouldShow = (meldValue === 10 || meldValue === 20);
+        }
+        
+        ninesLabel.style.display = shouldShow ? 'inline' : 'none';
+        
+        // Uncheck the checkbox if hiding it
+        if (!shouldShow) {
+            const checkbox = document.getElementById(`nines-only-${playerId}`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        }
+    }
+    
     nextToMeldPhase() {
         if (!this.currentGame) {
             console.debug('No current game.');
