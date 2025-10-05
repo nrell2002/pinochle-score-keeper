@@ -673,11 +673,14 @@ class GameController {
 
         const winner = this.currentGame.checkForWinner();
         if (winner) {
-            notificationService.gameWin(winner.name, winner.score);
+            const winnerName = winner.teamName || winner.name;
+            const winnerScore = winner.score;
+            
+            notificationService.gameWin(winnerName, winnerScore);
             
             setTimeout(() => {
                 if (notificationService.confirm(
-                    `${winner.name} has reached ${this.currentGame.targetScore} points and wins!\n\nEnd the game now?`
+                    `${winnerName} has reached ${this.currentGame.targetScore} points and wins!\n\nEnd the game now?`
                 )) {
                     this.endGame();
                 }
@@ -696,9 +699,25 @@ class GameController {
         }
 
         try {
-            const winner = this.currentGame.scores.reduce((prev, current) => 
-                (prev.score > current.score) ? prev : current
-            );
+            let winner;
+            let winnerMessage;
+            
+            // Check for team or individual winner
+            const gameWinner = this.currentGame.checkForWinner();
+            if (gameWinner && gameWinner.type === 'team') {
+                // Team winner
+                winner = { 
+                    playerId: `team_${gameWinner.team}`, 
+                    name: gameWinner.teamName 
+                };
+                winnerMessage = `${gameWinner.teamName} wins with ${gameWinner.score} points!`;
+            } else {
+                // Individual winner (highest score)
+                winner = this.currentGame.scores.reduce((prev, current) => 
+                    (prev.score > current.score) ? prev : current
+                );
+                winnerMessage = `Game ended! ${winner.name} wins with ${winner.score} points!`;
+            }
 
             this.currentGame.endGame(winner.playerId, winner.name);
 
@@ -716,7 +735,7 @@ class GameController {
             DOM.show(this.elements.gameSetup);
             DOM.hide(this.elements.gamePlay);
 
-            notificationService.success(`Game ended! ${winner.name} wins with ${winner.score} points!`);
+            notificationService.success(winnerMessage);
             eventService.emit(EVENTS.GAME_ENDED, gameData);
 
         } catch (error) {
@@ -735,13 +754,28 @@ class GameController {
             const players = this.currentGame.players;
             const scores = this.currentGame.scores;
             const hands = this.currentGame.hands;
+            const is4PlayerTeamGame = this.currentGame.gameType === 4 && this.currentGame.teamAssignments;
 
             let html = '<table><thead><tr><th>Round / Winning Bid</th>';
-            for (const player of players) {
-                html += `<th>${player.name}</th>`;
+            
+            // Header row with player names and team colors for 4-player games
+            if (is4PlayerTeamGame) {
+                for (const player of players) {
+                    const playerIndex = players.findIndex(p => p.id === player.id);
+                    const teamClass = this.getPlayerTeamClass(player.id);
+                    html += `<th class="${teamClass}">${player.name}</th>`;
+                }
+                // Add team total columns
+                html += '<th class="team-a-header">Team A Total</th>';
+                html += '<th class="team-b-header">Team B Total</th>';
+            } else {
+                for (const player of players) {
+                    html += `<th>${player.name}</th>`;
+                }
             }
             html += '</tr></thead><tbody>';
 
+            // Hand rows
             hands.forEach(hand => {
                 let roundInfo = `#${hand.handNumber}`;
                 if (hand.winningBid) {
@@ -754,24 +788,70 @@ class GameController {
                 html += `<tr><td>${roundInfo}</td>`;
 
                 if (hand.thrownIn) {
-                    html += `<td colspan="${players.length}" style="color:#e74c3c;font-weight:bold;">Thrown In (No Bids)</td>`;
+                    const colSpan = is4PlayerTeamGame ? players.length + 2 : players.length;
+                    html += `<td colspan="${colSpan}" style="color:#e74c3c;font-weight:bold;">Thrown In (No Bids)</td>`;
                 } else {
+                    // Player scores
                     for (const player of players) {
                         const meld = hand.playerMeld[player.id] || 0;
                         const score = hand.playerScores[player.id] || 0;
-                        html += `<td>Meld: ${meld}<br>Score: ${score}</td>`;
+                        const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
+                        html += `<td class="${teamClass}">Meld: ${meld}<br>Score: ${score}</td>`;
+                    }
+                    
+                    // Team totals for this hand (4-player only)
+                    if (is4PlayerTeamGame) {
+                        const teamAHandTotal = this.currentGame.teamAssignments.teamA.reduce((total, player) => {
+                            const meld = hand.playerMeld[player.id] || 0;
+                            const score = hand.playerScores[player.id] || 0;
+                            return total + meld + score;
+                        }, 0);
+                        
+                        const teamBHandTotal = this.currentGame.teamAssignments.teamB.reduce((total, player) => {
+                            const meld = hand.playerMeld[player.id] || 0;
+                            const score = hand.playerScores[player.id] || 0;
+                            return total + meld + score;
+                        }, 0);
+                        
+                        html += `<td class="team-a-cell"><b>${teamAHandTotal}</b></td>`;
+                        html += `<td class="team-b-cell"><b>${teamBHandTotal}</b></td>`;
                     }
                 }
                 html += '</tr>';
             });
 
-            // Add totals row
-            html += '<tr><td><b>Total</b></td>';
+            // Totals row
+            html += '<tr class="totals-row"><td><b>Total</b></td>';
             for (const player of players) {
                 const total = scores.find(s => s.playerId === player.id).score;
-                html += `<td><b>${total}</b></td>`;
+                const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
+                html += `<td class="${teamClass}"><b>${total}</b></td>`;
             }
+            
+            // Team grand totals (4-player only)
+            if (is4PlayerTeamGame) {
+                const teamScores = this.currentGame.getTeamScores();
+                html += `<td class="team-a-total"><b>${teamScores.teamA}</b></td>`;
+                html += `<td class="team-b-total"><b>${teamScores.teamB}</b></td>`;
+            }
+            
             html += '</tr></tbody></table>';
+
+            // Add team legend for 4-player games
+            if (is4PlayerTeamGame) {
+                html += `
+                    <div class="team-legend" style="margin-top: 15px;">
+                        <div class="team-indicator">
+                            <div class="team-color team-a"></div>
+                            <span>Team A: ${this.currentGame.teamAssignments.teamA.map(p => p.name).join(' & ')}</span>
+                        </div>
+                        <div class="team-indicator">
+                            <div class="team-color team-b"></div>
+                            <span>Team B: ${this.currentGame.teamAssignments.teamB.map(p => p.name).join(' & ')}</span>
+                        </div>
+                    </div>
+                `;
+            }
 
             DOM.setHTML(this.elements.scoreboard, html);
             eventService.emit(EVENTS.SCOREBOARD_UPDATED, this.currentGame);
@@ -779,6 +859,18 @@ class GameController {
         } catch (error) {
             console.error('Failed to update scoreboard:', error);
         }
+    }
+
+    /**
+     * Get team class for a player in 4-player games
+     * @param {string} playerId - Player ID
+     * @returns {string} Team class name
+     */
+    getPlayerTeamClass(playerId) {
+        if (!this.currentGame?.teamAssignments) return '';
+        
+        const isTeamA = this.currentGame.teamAssignments.teamA.some(p => p.id === playerId);
+        return isTeamA ? 'team-a' : 'team-b';
     }
 
     /**

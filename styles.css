@@ -628,6 +628,48 @@ button {
     border-color: var(--warning-color);
 }
 
+/* Scoreboard team styling */
+.scoreboard .team-a {
+    background-color: rgba(39, 174, 96, 0.1);
+    border-left: 3px solid var(--success-color);
+}
+
+.scoreboard .team-b {
+    background-color: rgba(243, 156, 18, 0.1);
+    border-left: 3px solid var(--warning-color);
+}
+
+.scoreboard .team-a-header,
+.scoreboard .team-a-cell,
+.scoreboard .team-a-total {
+    background-color: var(--success-color);
+    color: white;
+    font-weight: bold;
+}
+
+.scoreboard .team-b-header,
+.scoreboard .team-b-cell,
+.scoreboard .team-b-total {
+    background-color: var(--warning-color);
+    color: white;
+    font-weight: bold;
+}
+
+.scoreboard .totals-row {
+    background-color: var(--light-bg);
+    font-weight: bold;
+}
+
+.scoreboard .team-legend {
+    position: static;
+    margin: 15px 0 0 0;
+    text-align: left;
+}
+
+.scoreboard .team-indicator {
+    margin-bottom: 5px;
+}
+
 .dealer-indicator {
     position: absolute;
     top: 30%; /* Move up above the seat circle */
