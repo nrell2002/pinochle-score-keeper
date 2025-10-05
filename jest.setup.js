@@ -1,16 +1,26 @@
 // Jest setup file for global test configuration
 
-// Mock localStorage for testing
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-  length: 0,
-  key: jest.fn(),
-};
 
-global.localStorage = localStorageMock;
+// Patch localStorage methods to always be mock functions
+beforeAll(() => {
+  if (typeof global.localStorage !== 'undefined') {
+    global.localStorage.getItem = jest.fn();
+    global.localStorage.setItem = jest.fn();
+    global.localStorage.removeItem = jest.fn();
+    global.localStorage.clear = jest.fn();
+    global.localStorage.key = jest.fn();
+  } else {
+    const localStorageMock = {
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+      clear: jest.fn(),
+      length: 0,
+      key: jest.fn(),
+    };
+    global.localStorage = localStorageMock;
+  }
+});
 
 // Mock console methods to reduce noise in tests
 global.console = {
@@ -28,8 +38,11 @@ global.Date.now = mockDateNow;
 // Clean up mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
-  localStorageMock.getItem.mockClear();
-  localStorageMock.setItem.mockClear();
-  localStorageMock.removeItem.mockClear();
-  localStorageMock.clear.mockClear();
+  if (global.localStorage) {
+    if (typeof global.localStorage.getItem === 'function' && global.localStorage.getItem.mockClear) global.localStorage.getItem.mockClear();
+    if (typeof global.localStorage.setItem === 'function' && global.localStorage.setItem.mockClear) global.localStorage.setItem.mockClear();
+    if (typeof global.localStorage.removeItem === 'function' && global.localStorage.removeItem.mockClear) global.localStorage.removeItem.mockClear();
+    if (typeof global.localStorage.clear === 'function' && global.localStorage.clear.mockClear) global.localStorage.clear.mockClear();
+    if (typeof global.localStorage.key === 'function' && global.localStorage.key.mockClear) global.localStorage.key.mockClear();
+  }
 });
