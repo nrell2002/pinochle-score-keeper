@@ -1,24 +1,19 @@
-export default {
+module.exports = {
   // Use Babel to transform ES6 modules
   transform: {
     '^.+\\.js$': 'babel-jest',
   },
-  
   // Test file patterns
   testMatch: [
     '**/__tests__/**/*.js',
     '**/?(*.)+(spec|test).js'
   ],
-  
   // Module file extensions
   moduleFileExtensions: ['js', 'json'],
-  
   // Test environment
   testEnvironment: 'jsdom',
-  
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  
   // Coverage configuration
   collectCoverage: true,
   coverageDirectory: 'coverage',
@@ -29,7 +24,6 @@ export default {
     'jest.config.js',
     'jest.setup.js'
   ],
-  
   // Coverage thresholds
   coverageThreshold: {
     global: {

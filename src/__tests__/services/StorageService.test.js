@@ -1,8 +1,89 @@
 import storageService from '../../services/StorageService.js';
 
 describe('StorageService', () => {
+  describe('utility methods', () => {
+    test('clearAll removes all keys', () => {
+      const spy = jest.spyOn(storageService, 'remove');
+      storageService.clearAll();
+      expect(spy).toHaveBeenCalledWith(storageService.keys.PLAYERS);
+      expect(spy).toHaveBeenCalledWith(storageService.keys.CURRENT_GAME);
+      expect(spy).toHaveBeenCalledWith(storageService.keys.GAME_HISTORY);
+      spy.mockRestore();
+    });
+
+    test('exportData returns all stored data', () => {
+  const players = [{ id: '1', name: 'Alice' }, { id: '2', name: 'Bob' }];
+  const game = { id: 'game-1', players: ['Alice', 'Bob'] };
+  const history = [{ id: 'game-1' }, { id: 'game-2' }];
+  jest.spyOn(storageService, 'loadPlayers').mockReturnValue(players);
+  jest.spyOn(storageService, 'loadCurrentGame').mockReturnValue(game);
+  jest.spyOn(storageService, 'loadGameHistory').mockReturnValue(history);
+  const data = storageService.exportData();
+  expect(data.players).toEqual(players);
+  expect(data.currentGame).toEqual(game);
+  expect(data.gameHistory).toEqual(history);
+  expect(typeof data.exportDate).toBe('string');
+    });
+
+    test('importData imports players, currentGame, and gameHistory', () => {
+      const players = [{ id: '1', name: 'Alice' }, { id: '2', name: 'Bob' }];
+      const game = { id: 'game-1', players: ['Alice', 'Bob'] };
+      const history = [{ id: 'game-1' }, { id: 'game-2' }];
+      const spyPlayers = jest.spyOn(storageService, 'savePlayers');
+      const spyGame = jest.spyOn(storageService, 'saveCurrentGame');
+      const spyHistory = jest.spyOn(storageService, 'saveGameHistory');
+      const result = storageService.importData({
+        players,
+        currentGame: game,
+        gameHistory: history
+      }, true);
+      expect(spyPlayers).toHaveBeenCalledWith(players);
+      expect(spyGame).toHaveBeenCalledWith(game);
+      expect(spyHistory).toHaveBeenCalledWith(history);
+      expect(result.success).toBe(true);
+      spyPlayers.mockRestore();
+      spyGame.mockRestore();
+      spyHistory.mockRestore();
+    });
+
+    test('isAvailable returns true when localStorage works', () => {
+      localStorage.setItem.mockImplementation(() => {});
+      localStorage.removeItem.mockImplementation(() => {});
+      expect(storageService.isAvailable()).toBe(true);
+    });
+
+    test('isAvailable returns false when localStorage throws', () => {
+      localStorage.setItem.mockImplementation(() => { throw new Error('fail'); });
+      expect(storageService.isAvailable()).toBe(false);
+    });
+
+    test('getStorageInfo returns usage info', () => {
+  jest.spyOn(storageService, 'isAvailable').mockReturnValue(true);
+  localStorage.getItem.mockReturnValueOnce('abc').mockReturnValueOnce('defg').mockReturnValueOnce(null);
+  const info = storageService.getStorageInfo();
+  expect(info.available).toBe(true);
+  expect(info.usage.players).toBe(3);
+  expect(info.usage.current_game).toBe(4);
+  expect(info.usage.game_history).toBe(0);
+  expect(info.totalSize).toBe(7);
+  // Calculate expected KB value based on implementation
+  const expectedKB = Math.round(7 / 1024 * 100) / 100;
+  expect(info.totalSizeKB).toBeCloseTo(expectedKB, 2);
+    });
+  });
   beforeEach(() => {
-    // Clear localStorage mock
+    // Ensure localStorage methods are Jest mock functions
+    Object.defineProperty(global, 'localStorage', {
+      value: {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+        key: jest.fn(),
+        length: 0
+      },
+      configurable: true
+    });
     localStorage.clear();
     jest.clearAllMocks();
   });
@@ -59,8 +140,20 @@ describe('StorageService', () => {
     });
 
     test('should return empty array for players by default', () => {
-      localStorage.getItem.mockReturnValue(null);
-      const result = storageService.loadPlayers();
+      Object.defineProperty(global, 'localStorage', {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+          key: jest.fn(),
+          length: 0
+        },
+        configurable: true
+      });
+      const { StorageService } = require('../../services/StorageService.js');
+      const isolatedService = new StorageService();
+      const result = isolatedService.loadPlayers();
       expect(result).toEqual([]);
     });
   });
@@ -81,8 +174,20 @@ describe('StorageService', () => {
     });
 
     test('should return null for current game by default', () => {
-      localStorage.getItem.mockReturnValue(null);
-      const result = storageService.loadCurrentGame();
+      Object.defineProperty(global, 'localStorage', {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+          key: jest.fn(),
+          length: 0
+        },
+        configurable: true
+      });
+      const { StorageService } = require('../../services/StorageService.js');
+      const isolatedService = new StorageService();
+      const result = isolatedService.loadCurrentGame();
       expect(result).toBeNull();
     });
 
@@ -108,18 +213,40 @@ describe('StorageService', () => {
     });
 
     test('should return empty array for game history by default', () => {
-      localStorage.getItem.mockReturnValue(null);
-      const result = storageService.loadGameHistory();
+      Object.defineProperty(global, 'localStorage', {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+          key: jest.fn(),
+          length: 0
+        },
+        configurable: true
+      });
+      const { StorageService } = require('../../services/StorageService.js');
+      const isolatedService = new StorageService();
+      const result = isolatedService.loadGameHistory();
       expect(result).toEqual([]);
     });
 
     test('should add game to history', () => {
       const existingHistory = [{ id: 'game-1' }];
       const newGame = { id: 'game-2' };
-      
-      localStorage.getItem.mockReturnValue(JSON.stringify(existingHistory));
-      storageService.addToGameHistory(newGame);
-      
+      Object.defineProperty(global, 'localStorage', {
+        value: {
+          getItem: jest.fn(() => JSON.stringify(existingHistory)),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+          key: jest.fn(),
+          length: 0
+        },
+        configurable: true
+      });
+      const { StorageService } = require('../../services/StorageService.js');
+      const isolatedService = new StorageService();
+      isolatedService.addToGameHistory(newGame);
       expect(localStorage.setItem).toHaveBeenCalledWith(
         'pinochle-game-history',
         JSON.stringify([{ id: 'game-1' }, { id: 'game-2' }])

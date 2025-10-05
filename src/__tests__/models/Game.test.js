@@ -1,3 +1,64 @@
+describe('Game edge cases', () => {
+  let mockPlayers;
+  beforeEach(() => {
+    mockPlayers = [
+      { id: 'p1', name: 'A' },
+      { id: 'p2', name: 'B' }
+    ];
+  });
+
+  test('recalculateScores skips thrown in hands', () => {
+    const game = new Game(mockPlayers, 2);
+    const hand = {
+      thrownIn: true,
+      isBidderSet: () => false,
+      playerMeld: {},
+      playerScores: {}
+    };
+    game.hands = [hand];
+    game.scores[0].score = 100;
+    game.scores[1].score = 200;
+    game.recalculateScores();
+    expect(game.scores[0].score).toBe(0);
+    expect(game.scores[1].score).toBe(0);
+  });
+
+  test('recalculateScores handles bidder set', () => {
+    const game = new Game(mockPlayers, 2);
+    const hand = {
+      thrownIn: false,
+      isBidderSet: () => true,
+      bidderId: 'p1',
+      winningBid: 50,
+      playerMeld: { p2: 10 },
+      playerScores: { p2: 20 }
+    };
+    game.hands = [hand];
+    game.recalculateScores();
+    expect(game.scores[0].score).toBe(-50);
+    expect(game.scores[1].score).toBe(30);
+  });
+
+  test('checkForWinner returns highest scorer among those reaching target', () => {
+    const game = new Game(mockPlayers, 2);
+    game.scores = [
+      { playerId: 'p1', name: 'A', score: 1000 },
+      { playerId: 'p2', name: 'B', score: 1200 }
+    ];
+    const winner = game.checkForWinner();
+    expect(winner.playerId).toBe('p2');
+  });
+
+  test('checkForWinner returns null if no one reaches target', () => {
+    const game = new Game(mockPlayers, 2);
+    game.scores = [
+      { playerId: 'p1', name: 'A', score: 500 },
+      { playerId: 'p2', name: 'B', score: 800 }
+    ];
+    const winner = game.checkForWinner();
+    expect(winner).toBeNull();
+  });
+});
 import Game from '../../models/Game.js';
 import GameHand from '../../models/GameHand.js';
 
@@ -321,24 +382,12 @@ describe('Game', () => {
 
   describe('getDurationMinutes', () => {
     test('should calculate duration for ongoing game', () => {
-      // Set up the test carefully to avoid Date.now conflicts
-      const originalDateNow = Date.now;
-      const originalDate = global.Date;
-      
-      // Mock current time for duration calculation
-      const laterTime = new Date('2023-01-01T13:30:00.000Z').getTime();
-      global.Date = jest.fn(() => new Date('2023-01-01T13:30:00.000Z'));
-      global.Date.now = jest.fn(() => laterTime);
-      
-      // Create game with start time
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2023-01-01T13:30:00.000Z'));
       const game = new Game(mockPlayers, 3);
       game.startTime = '2023-01-01T12:00:00.000Z';
-      
       expect(game.getDurationMinutes()).toBe(90); // 1.5 hours = 90 minutes
-      
-      // Restore
-      global.Date = originalDate;
-      global.Date.now = originalDateNow;
+      jest.useRealTimers();
     });
 
     test('should calculate duration for completed game', () => {
@@ -349,7 +398,7 @@ describe('Game', () => {
       expect(game.getDurationMinutes()).toBe(135); // 2.25 hours = 135 minutes
     });
   });
-
+  
   describe('getStatus', () => {
     test('should return complete status information', () => {
       const game = new Game(mockPlayers, 3);
@@ -434,6 +483,9 @@ describe('Game', () => {
 
   describe('toData', () => {
     test('should convert game to plain object', () => {
+      // Mock Date.prototype.toISOString to return mockDate
+      const mockDateValue = '2023-01-01T12:00:00.000Z';
+      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(mockDateValue);
       const game = new Game(mockPlayers, 3);
       const mockHand = { toData: jest.fn().mockReturnValue({ handNumber: 1 }) };
       game.hands = [mockHand];
@@ -451,14 +503,15 @@ describe('Game', () => {
           { playerId: 'player2', name: 'Bob', score: 0 },
           { playerId: 'player3', name: 'Charlie', score: 0 }
         ],
-        startTime: mockDate,
-        endTime: mockDate,
+        startTime: mockDateValue,
+        endTime: mockDateValue,
         targetScore: 1500,
         dealerIndex: 0,
         winnerId: 'player1',
         winnerName: 'Alice'
       });
       expect(mockHand.toData).toHaveBeenCalled();
+      jest.restoreAllMocks();
     });
   });
 });
