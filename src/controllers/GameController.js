@@ -367,6 +367,29 @@ class GameController {
     }
 
     /**
+     * Check if a player is on the same team as the bidder (4-player games only)
+     * @param {string} playerId - Player ID to check
+     * @returns {boolean} True if player is the bidder's teammate
+     */
+    isPlayerBidderTeammate(playerId) {
+        if (!this.currentGame || !this.pendingHand || this.currentGame.gameType !== 4) {
+            return false;
+        }
+
+        const bidderId = this.pendingHand.bidderId;
+        const teamAssignments = this.currentGame.teamAssignments;
+        
+        if (!teamAssignments) return false;
+
+        // Check if both players are on the same team
+        const bidderOnTeamA = teamAssignments.teamA.some(p => p.id === bidderId);
+        const playerOnTeamA = teamAssignments.teamA.some(p => p.id === playerId);
+        
+        // They are teammates if they're on the same team
+        return bidderOnTeamA === playerOnTeamA;
+    }
+
+    /**
      * Update meld and score input sections
      */
     updateMeldScoreInputs() {
@@ -376,8 +399,11 @@ class GameController {
         if (this.elements.meldInputs) {
             const meldHtml = this.currentGame.players.map(p => {
                 let checkbox = '';
-                // Only show checkbox for non-winning players
-                if (!this.pendingHand || p.id !== this.pendingHand.bidderId) {
+                // Only show checkbox for players who are NOT the bidder AND NOT the bidder's teammate
+                const isBidder = this.pendingHand && p.id === this.pendingHand.bidderId;
+                const isBidderTeammate = this.isPlayerBidderTeammate(p.id);
+                
+                if (!isBidder && !isBidderTeammate) {
                     checkbox = `<label class="nines-only-label" id="nines-label-${p.id}" style="display: none;">
                         <input type="checkbox" id="nines-only-${p.id}"> Only 9's of trump?
                     </label>`;
@@ -396,7 +422,10 @@ class GameController {
             // Add event listeners to meld inputs to toggle 9's checkbox visibility
             this.currentGame.players.forEach(p => {
                 const meldInput = DOM.getById(`meld-${p.id}`);
-                if (meldInput && (!this.pendingHand || p.id !== this.pendingHand.bidderId)) {
+                const isBidder = this.pendingHand && p.id === this.pendingHand.bidderId;
+                const isBidderTeammate = this.isPlayerBidderTeammate(p.id);
+                
+                if (meldInput && !isBidder && !isBidderTeammate) {
                     meldInput.addEventListener('input', () => {
                         this.toggleNinesCheckbox(p.id);
                     });

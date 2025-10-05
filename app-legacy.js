@@ -298,8 +298,11 @@ class PinochleScoreKeeper {
         // Prepare meld/score inputs (will be shown after Next)
         meldInputs.innerHTML = this.currentGame.players.map(p => {
             let checkbox = '';
-            // Only show checkbox for non-winning players
-            if (!this._pendingHand || p.id !== this._pendingHand.bidderId) {
+            // Only show checkbox for players who are NOT the bidder AND NOT the bidder's teammate
+            const isBidder = this._pendingHand && p.id === this._pendingHand.bidderId;
+            const isBidderTeammate = this.isPlayerBidderTeammateLegacy(p.id);
+            
+            if (!isBidder && !isBidderTeammate) {
                 checkbox = `<label style="margin-left:8px; display: none;" id="nines-label-${p.id}"><input type="checkbox" id="nines-only-${p.id}"> Only 9's of trump?</label>`;
             }
             return `
@@ -313,7 +316,10 @@ class PinochleScoreKeeper {
         
         // Add event listeners to meld inputs for dynamic checkbox visibility
         this.currentGame.players.forEach(p => {
-            if (!this._pendingHand || p.id !== this._pendingHand.bidderId) {
+            const isBidder = this._pendingHand && p.id === this._pendingHand.bidderId;
+            const isBidderTeammate = this.isPlayerBidderTeammateLegacy(p.id);
+            
+            if (!isBidder && !isBidderTeammate) {
                 const meldInput = document.getElementById(`meld-${p.id}`);
                 if (meldInput) {
                     meldInput.addEventListener('input', () => {
@@ -333,6 +339,29 @@ class PinochleScoreKeeper {
         `).join('');
 
         this.updateScoreboard();
+    }
+    
+    /**
+     * Check if a player is on the same team as the bidder (4-player games only, legacy version)
+     * @param {string} playerId - Player ID to check
+     * @returns {boolean} True if player is the bidder's teammate
+     */
+    isPlayerBidderTeammateLegacy(playerId) {
+        if (!this.currentGame || !this._pendingHand || this.currentGame.players.length !== 4) {
+            return false;
+        }
+
+        const bidderId = this._pendingHand.bidderId;
+        
+        // Legacy apps might not have teamAssignments, so we infer from player order
+        // In 4-player pinochle: players 0&2 are teamA, players 1&3 are teamB
+        const bidderIndex = this.currentGame.players.findIndex(p => p.id === bidderId);
+        const playerIndex = this.currentGame.players.findIndex(p => p.id === playerId);
+        
+        if (bidderIndex === -1 || playerIndex === -1) return false;
+        
+        // Same team if both have even indexes (0,2) or both have odd indexes (1,3)
+        return (bidderIndex % 2) === (playerIndex % 2);
     }
     
     /**
