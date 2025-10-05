@@ -301,7 +301,7 @@ class GameController {
                 let checkbox = '';
                 // Only show checkbox for non-winning players
                 if (!this.pendingHand || p.id !== this.pendingHand.bidderId) {
-                    checkbox = `<label style="margin-left:8px;">
+                    checkbox = `<label class="nines-only-label">
                         <input type="checkbox" id="nines-only-${p.id}"> Only 9's of trump?
                     </label>`;
                 }
