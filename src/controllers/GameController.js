@@ -1,5 +1,6 @@
 import Game from '../models/Game.js';
 import GameHand from '../models/GameHand.js';
+import TableSetupController from './TableSetupController.js';
 import storageService from '../services/StorageService.js';
 import notificationService from '../services/NotificationService.js';
 import eventService, { EVENTS } from '../services/EventService.js';
@@ -12,6 +13,7 @@ import { getGameConfig, getMinBid } from '../utils/config.js';
 class GameController {
     constructor(playerController) {
         this.playerController = playerController;
+        this.tableSetupController = new TableSetupController();
         this.currentGame = null;
         this.pendingHand = null;
         this.elements = {};
@@ -35,6 +37,7 @@ class GameController {
             // Game setup
             gameType: DOM.getById('game-type'),
             playerSelection: DOM.getById('player-selection'),
+            setupTableBtn: DOM.getById('setup-table'),
             startGameBtn: DOM.getById('start-game'),
             gameSetup: DOM.getById('game-setup'),
             gamePlay: DOM.getById('game-play'),
@@ -84,7 +87,16 @@ class GameController {
     attachEventListeners() {
         // Game setup
         if (this.elements.gameType) {
-            DOM.on(this.elements.gameType, 'change', () => this.updatePlayerSelection());
+            DOM.on(this.elements.gameType, 'change', () => {
+                this.updatePlayerSelection();
+                const gameType = parseInt(this.elements.gameType.value);
+                this.tableSetupController.setGameType(gameType);
+                eventService.emit('game-type-changed', gameType);
+            });
+        }
+
+        if (this.elements.setupTableBtn) {
+            DOM.on(this.elements.setupTableBtn, 'click', () => this.setupTable());
         }
 
         if (this.elements.startGameBtn) {
@@ -174,6 +186,10 @@ class GameController {
             DOM.setHTML(playerSelection, 
                 `<p>You need at least ${gameType} players to start a ${gameType}-player game. Add more players first.</p>`
             );
+            // Hide setup table button
+            if (this.elements.setupTableBtn) {
+                DOM.hide(this.elements.setupTableBtn);
+            }
             return;
         }
 
@@ -189,36 +205,97 @@ class GameController {
 
         DOM.setHTML(playerSelection, html);
 
+        // Show setup table button
+        if (this.elements.setupTableBtn) {
+            DOM.show(this.elements.setupTableBtn);
+        }
+
         // Add click event listeners to player items
         DOM.queryAll('.player-item').forEach(item => {
             DOM.on(item, 'click', () => {
                 item.classList.toggle('selected');
+                this.checkPlayerSelection();
             });
         });
+    }
+
+    /**
+     * Check if the correct number of players are selected
+     */
+    checkPlayerSelection() {
+        const gameType = parseInt(this.elements.gameType?.value || '2');
+        const selectedElements = DOM.queryAll('.player-item.selected');
+        
+        if (selectedElements.length === gameType) {
+            const selectedPlayerIds = Array.from(selectedElements).map(el => el.dataset.playerId);
+            const selectedPlayers = this.playerController.getPlayersByIds(selectedPlayerIds);
+            
+            // Update table setup controller with selected players
+            this.tableSetupController.setSelectedPlayers(selectedPlayers);
+            eventService.emit('players-selected', selectedPlayers);
+            
+            // Enable setup table button
+            if (this.elements.setupTableBtn) {
+                this.elements.setupTableBtn.disabled = false;
+                DOM.setText(this.elements.setupTableBtn, 'Setup Table');
+            }
+        } else {
+            // Disable setup table button
+            if (this.elements.setupTableBtn) {
+                this.elements.setupTableBtn.disabled = true;
+                DOM.setText(this.elements.setupTableBtn, `Select ${gameType} players first`);
+            }
+        }
+    }
+
+    /**
+     * Setup table with selected players
+     */
+    setupTable() {
+        const gameType = parseInt(this.elements.gameType?.value || '2');
+        const selectedElements = DOM.queryAll('.player-item.selected');
+        const selectedPlayerIds = Array.from(selectedElements).map(el => el.dataset.playerId);
+
+        if (selectedPlayerIds.length !== gameType) {
+            notificationService.error(`Please select exactly ${gameType} players first`);
+            return;
+        }
+
+        // Show table setup interface
+        this.tableSetupController.showTableSetup();
     }
 
     /**
      * Start a new game
      */
     startGame() {
-        const gameType = parseInt(this.elements.gameType?.value || '2');
-        const selectedElements = DOM.queryAll('.player-item.selected');
-        const selectedPlayerIds = Array.from(selectedElements).map(el => el.dataset.playerId);
-
-        if (selectedPlayerIds.length !== gameType) {
-            notificationService.error(`Please select exactly ${gameType} players`);
+        // Check if table setup is complete
+        if (!this.tableSetupController.isTableSetupComplete()) {
+            notificationService.error('Please complete the table setup first');
             return;
         }
 
         try {
-            const players = this.playerController.getPlayersByIds(selectedPlayerIds);
-            this.currentGame = new Game(players, gameType);
+            // Get arranged players from table setup
+            const arrangedPlayers = this.tableSetupController.getArrangedPlayers();
+            const gameType = parseInt(this.elements.gameType?.value || '2');
+            
+            // Create game with arranged players
+            this.currentGame = new Game(arrangedPlayers, gameType);
+            
+            // For 4-player games, set team assignments
+            if (gameType === 4) {
+                const teamAssignments = this.tableSetupController.getTeamAssignments();
+                if (teamAssignments) {
+                    this.currentGame.teamAssignments = teamAssignments;
+                }
+            }
             
             this.saveCurrentGame();
             this.updateGameInterface();
             this.showGameInterface();
             
-            notificationService.success('Game started!');
+            notificationService.success('Game started with table arrangement!');
             eventService.emit(EVENTS.GAME_STARTED, this.currentGame);
         } catch (error) {
             console.error('Failed to start game:', error);

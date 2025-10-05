@@ -226,6 +226,7 @@ class PinochleScoreKeeperApp {
         // Expose controllers for direct access if needed
         window.playerController = this.controllers.player;
         window.gameController = this.controllers.game;
+        window.tableSetupController = this.controllers.game?.tableSetupController;
         window.uiController = this.controllers.ui;
         window.statsController = this.controllers.stats;
         
