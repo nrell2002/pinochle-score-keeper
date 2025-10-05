@@ -353,6 +353,121 @@ describe('Game', () => {
       const winner = game.checkForWinner();
       expect(winner).toEqual({ playerId: 'player1', name: 'Alice', score: 1700 });
     });
+
+    test('should return team winner for 4-player games when team reaches target', () => {
+      const mockPlayers = [
+        { id: 'player1', name: 'Alice' },
+        { id: 'player2', name: 'Bob' },
+        { id: 'player3', name: 'Charlie' },
+        { id: 'player4', name: 'Diana' }
+      ];
+      
+      const game = new Game(mockPlayers, 4);
+      
+      // Set up team assignments
+      game.teamAssignments = {
+        teamA: [{ id: 'player1', name: 'Alice' }, { id: 'player3', name: 'Charlie' }],
+        teamB: [{ id: 'player2', name: 'Bob' }, { id: 'player4', name: 'Diana' }]
+      };
+      
+      // Set individual scores where Team A reaches target
+      game.scores = [
+        { playerId: 'player1', name: 'Alice', score: 800 },
+        { playerId: 'player2', name: 'Bob', score: 600 },
+        { playerId: 'player3', name: 'Charlie', score: 750 }, // Team A total: 1550
+        { playerId: 'player4', name: 'Diana', score: 700 }    // Team B total: 1300
+      ];
+      
+      const winner = game.checkForWinner();
+      expect(winner).toBeTruthy();
+      expect(winner.type).toBe('team');
+      expect(winner.team).toBe('teamA');
+      expect(winner.score).toBe(1550);
+      expect(winner.teamName).toBe('Team A');
+    });
+
+    test('should return null for 4-player games when no team reaches target', () => {
+      const mockPlayers = [
+        { id: 'player1', name: 'Alice' },
+        { id: 'player2', name: 'Bob' },
+        { id: 'player3', name: 'Charlie' },
+        { id: 'player4', name: 'Diana' }
+      ];
+      
+      const game = new Game(mockPlayers, 4);
+      
+      // Set up team assignments
+      game.teamAssignments = {
+        teamA: [{ id: 'player1', name: 'Alice' }, { id: 'player3', name: 'Charlie' }],
+        teamB: [{ id: 'player2', name: 'Bob' }, { id: 'player4', name: 'Diana' }]
+      };
+      
+      // Set individual scores where no team reaches target
+      game.scores = [
+        { playerId: 'player1', name: 'Alice', score: 400 },
+        { playerId: 'player2', name: 'Bob', score: 300 },
+        { playerId: 'player3', name: 'Charlie', score: 350 }, // Team A total: 750
+        { playerId: 'player4', name: 'Diana', score: 250 }    // Team B total: 550
+      ];
+      
+      const winner = game.checkForWinner();
+      expect(winner).toBeNull();
+    });
+  });
+
+  describe('getTeamScores', () => {
+    test('should calculate team totals correctly for 4-player games', () => {
+      const mockPlayers = [
+        { id: 'player1', name: 'Alice' },
+        { id: 'player2', name: 'Bob' },
+        { id: 'player3', name: 'Charlie' },
+        { id: 'player4', name: 'Diana' }
+      ];
+      
+      const game = new Game(mockPlayers, 4);
+      
+      // Set up team assignments
+      game.teamAssignments = {
+        teamA: [{ id: 'player1', name: 'Alice' }, { id: 'player3', name: 'Charlie' }],
+        teamB: [{ id: 'player2', name: 'Bob' }, { id: 'player4', name: 'Diana' }]
+      };
+      
+      // Set individual scores
+      game.scores = [
+        { playerId: 'player1', name: 'Alice', score: 400 },
+        { playerId: 'player2', name: 'Bob', score: 300 },
+        { playerId: 'player3', name: 'Charlie', score: 350 },
+        { playerId: 'player4', name: 'Diana', score: 250 }
+      ];
+      
+      const teamScores = game.getTeamScores();
+      expect(teamScores.teamA).toBe(750); // Alice + Charlie
+      expect(teamScores.teamB).toBe(550); // Bob + Diana
+    });
+
+    test('should return zero scores for non-4-player games', () => {
+      const game = new Game(mockPlayers, 3);
+      
+      const teamScores = game.getTeamScores();
+      expect(teamScores.teamA).toBe(0);
+      expect(teamScores.teamB).toBe(0);
+    });
+
+    test('should return zero scores when team assignments are missing', () => {
+      const mockPlayers = [
+        { id: 'player1', name: 'Alice' },
+        { id: 'player2', name: 'Bob' },
+        { id: 'player3', name: 'Charlie' },
+        { id: 'player4', name: 'Diana' }
+      ];
+      
+      const game = new Game(mockPlayers, 4);
+      // Don't set team assignments
+      
+      const teamScores = game.getTeamScores();
+      expect(teamScores.teamA).toBe(0);
+      expect(teamScores.teamB).toBe(0);
+    });
   });
 
   describe('endGame', () => {
@@ -415,12 +530,14 @@ describe('Game', () => {
 
       expect(status).toEqual({
         currentHand: 2,
+        gameType: 3,
         leader: 'Bob',
         leaderScore: 1400,
         targetScore: 1500,
         hasWinner: false,
         winner: null,
         winnerScore: null,
+        winnerType: 'individual',
         duration: 45
       });
     });

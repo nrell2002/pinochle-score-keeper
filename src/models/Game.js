@@ -104,6 +104,27 @@ class Game {
      * @returns {Object|null} Winner object or null if no winner
      */
     checkForWinner() {
+        // For 4-player team games, check team scores
+        if (this.gameType === 4 && this.teamAssignments) {
+            const teamScores = this.getTeamScores();
+            
+            if (teamScores.teamA >= this.targetScore || teamScores.teamB >= this.targetScore) {
+                const winningTeam = teamScores.teamA >= teamScores.teamB ? 'teamA' : 'teamB';
+                const winningScore = teamScores[winningTeam];
+                
+                return {
+                    type: 'team',
+                    team: winningTeam,
+                    score: winningScore,
+                    teamName: winningTeam === 'teamA' ? 'Team A' : 'Team B',
+                    players: this.teamAssignments[winningTeam]
+                };
+            }
+            
+            return null;
+        }
+        
+        // For individual games (2 or 3 players)
         const winningPlayers = this.scores.filter(s => s.score >= this.targetScore);
         
         if (winningPlayers.length > 0) {
@@ -114,6 +135,28 @@ class Game {
         }
         
         return null;
+    }
+
+    /**
+     * Get team scores for 4-player games
+     * @returns {Object} Team scores object with teamA and teamB totals
+     */
+    getTeamScores() {
+        if (this.gameType !== 4 || !this.teamAssignments) {
+            return { teamA: 0, teamB: 0 };
+        }
+
+        const teamAScore = this.teamAssignments.teamA.reduce((total, player) => {
+            const playerScore = this.scores.find(s => s.playerId === player.id);
+            return total + (playerScore ? playerScore.score : 0);
+        }, 0);
+
+        const teamBScore = this.teamAssignments.teamB.reduce((total, player) => {
+            const playerScore = this.scores.find(s => s.playerId === player.id);
+            return total + (playerScore ? playerScore.score : 0);
+        }, 0);
+
+        return { teamA: teamAScore, teamB: teamBScore };
     }
 
     /**
@@ -152,18 +195,42 @@ class Game {
     getStatus() {
         const winner = this.checkForWinner();
         const currentHand = this.getNextHandNumber();
+        
+        // For 4-player team games, include team information
+        if (this.gameType === 4 && this.teamAssignments) {
+            const teamScores = this.getTeamScores();
+            const leadingTeam = teamScores.teamA >= teamScores.teamB ? 'teamA' : 'teamB';
+            
+            return {
+                currentHand,
+                gameType: this.gameType,
+                teamScores,
+                leader: leadingTeam === 'teamA' ? 'Team A' : 'Team B',
+                leaderScore: teamScores[leadingTeam],
+                targetScore: this.targetScore,
+                hasWinner: winner !== null,
+                winner: winner?.teamName || winner?.name || null,
+                winnerScore: winner?.score || null,
+                winnerType: winner?.type || 'individual',
+                duration: this.getDurationMinutes()
+            };
+        }
+        
+        // For individual games
         const leader = this.scores.reduce((prev, current) => 
             (prev.score > current.score) ? prev : current
         );
 
         return {
             currentHand,
+            gameType: this.gameType,
             leader: leader.name,
             leaderScore: leader.score,
             targetScore: this.targetScore,
             hasWinner: winner !== null,
             winner: winner?.name || null,
             winnerScore: winner?.score || null,
+            winnerType: 'individual',
             duration: this.getDurationMinutes()
         };
     }
