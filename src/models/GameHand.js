@@ -113,7 +113,7 @@ class GameHand {
         }
 
         return {
-            success: errors.length === 0,
+            valid: errors.length === 0,
             errors
         };
     }

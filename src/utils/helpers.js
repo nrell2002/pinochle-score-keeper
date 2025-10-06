@@ -166,10 +166,6 @@ export const Validation = {
             return { valid: false, error: 'Meld must be divisible by 10' };
         }
 
-        if (meld > 1000) {
-            return { valid: false, error: 'Meld value is too high' };
-        }
-
         return { valid: true, value: meld };
     },
 
