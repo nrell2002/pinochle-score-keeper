@@ -367,6 +367,29 @@ class GameController {
     }
 
     /**
+     * Check if a player is on the same team as the bidder (4-player games only)
+     * @param {string} playerId - Player ID to check
+     * @returns {boolean} True if player is the bidder's teammate
+     */
+    isPlayerBidderTeammate(playerId) {
+        if (!this.currentGame || !this.pendingHand || this.currentGame.gameType !== 4) {
+            return false;
+        }
+
+        const bidderId = this.pendingHand.bidderId;
+        const teamAssignments = this.currentGame.teamAssignments;
+        
+        if (!teamAssignments) return false;
+
+        // Check if both players are on the same team
+        const bidderOnTeamA = teamAssignments.teamA.some(p => p.id === bidderId);
+        const playerOnTeamA = teamAssignments.teamA.some(p => p.id === playerId);
+        
+        // They are teammates if they're on the same team
+        return bidderOnTeamA === playerOnTeamA;
+    }
+
+    /**
      * Update meld and score input sections
      */
     updateMeldScoreInputs() {
@@ -376,9 +399,12 @@ class GameController {
         if (this.elements.meldInputs) {
             const meldHtml = this.currentGame.players.map(p => {
                 let checkbox = '';
-                // Only show checkbox for non-winning players
-                if (!this.pendingHand || p.id !== this.pendingHand.bidderId) {
-                    checkbox = `<label class="nines-only-label">
+                // Only show checkbox for players who are NOT the bidder AND NOT the bidder's teammate
+                const isBidder = this.pendingHand && p.id === this.pendingHand.bidderId;
+                const isBidderTeammate = this.isPlayerBidderTeammate(p.id);
+                
+                if (!isBidder && !isBidderTeammate) {
+                    checkbox = `<label class="nines-only-label" id="nines-label-${p.id}" style="display: none;">
                         <input type="checkbox" id="nines-only-${p.id}"> Only 9's of trump?
                     </label>`;
                 }
@@ -392,6 +418,21 @@ class GameController {
             }).join('');
 
             DOM.setHTML(this.elements.meldInputs, meldHtml);
+            
+            // Add event listeners to meld inputs to toggle 9's checkbox visibility
+            this.currentGame.players.forEach(p => {
+                const meldInput = DOM.getById(`meld-${p.id}`);
+                const isBidder = this.pendingHand && p.id === this.pendingHand.bidderId;
+                const isBidderTeammate = this.isPlayerBidderTeammate(p.id);
+                
+                if (meldInput && !isBidder && !isBidderTeammate) {
+                    meldInput.addEventListener('input', () => {
+                        this.toggleNinesCheckbox(p.id);
+                    });
+                    // Initialize checkbox visibility based on current value
+                    this.toggleNinesCheckbox(p.id);
+                }
+            });
         }
 
         // Score inputs
@@ -404,6 +445,42 @@ class GameController {
             `).join('');
 
             DOM.setHTML(this.elements.scoreInputs, scoreHtml);
+        }
+    }
+
+    /**
+     * Toggle visibility of 9's checkbox based on meld value and game type
+     * @param {string} playerId - Player ID
+     */
+    toggleNinesCheckbox(playerId) {
+        if (!this.currentGame) return;
+        
+        const meldInput = DOM.getById(`meld-${playerId}`);
+        const ninesLabel = DOM.getById(`nines-label-${playerId}`);
+        
+        if (!meldInput || !ninesLabel) return;
+        
+        const meldValue = parseInt(meldInput.value) || 0;
+        const gameType = this.currentGame.gameType;
+        
+        // Show checkbox only if meld value could be made up of only 9's of trump
+        let shouldShow = false;
+        if (gameType === 2) {
+            // 2-player: only 1 nine of trump (max 10 points)
+            shouldShow = (meldValue === 10);
+        } else {
+            // 3/4-player: 2 nines of trump (max 20 points)
+            shouldShow = (meldValue === 10 || meldValue === 20);
+        }
+        
+        ninesLabel.style.display = shouldShow ? 'block' : 'none';
+        
+        // Uncheck the checkbox if hiding it
+        if (!shouldShow) {
+            const checkbox = DOM.getById(`nines-only-${playerId}`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
         }
     }
 

@@ -1,5 +1,19 @@
 // Jest setup file for global test configuration
 
+// Mock window.matchMedia (required by some components)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // deprecated
+    removeListener: jest.fn(), // deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
 
 // Patch localStorage methods to always be mock functions
 beforeAll(() => {
