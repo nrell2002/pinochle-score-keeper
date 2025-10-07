@@ -389,7 +389,7 @@ class PinochleScoreKeeper {
             shouldShow = (meldValue === 10 || meldValue === 20);
         }
         
-        ninesLabel.style.display = shouldShow ? 'inline' : 'none';
+        ninesLabel.style.display = shouldShow ? 'block' : 'none';
         
         // Uncheck the checkbox if hiding it
         if (!shouldShow) {
