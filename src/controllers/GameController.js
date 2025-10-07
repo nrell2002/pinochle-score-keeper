@@ -1013,8 +1013,216 @@ class GameController {
      * Show score editing interface
      */
     showEditScores() {
-        // Implementation would be similar to the original but modularized
-        notificationService.info('Score editing feature will be implemented');
+        if (!this.currentGame || !this.currentGame.hands.length) {
+            notificationService.warning('No hands to edit');
+            return;
+        }
+
+        this.createEditScoresModal();
+    }
+
+    /**
+     * Create and display the edit scores modal
+     */
+    createEditScoresModal() {
+        // Remove existing modal if it exists
+        const existingModal = DOM.getById('edit-scores-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'edit-scores-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+
+        // Create modal content
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 900px;
+            width: 100%;
+            overflow: auto;
+            max-height: 80vh;
+        `;
+
+        // Build the form HTML
+        const formHTML = this.buildEditScoresFormHTML();
+        modalContent.innerHTML = formHTML;
+
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Initialize event handlers
+        this.initializeEditScoresHandlers(modal);
+
+        // Initialize with the first round
+        if (this.currentGame.hands.length > 0) {
+            this.renderRoundFields(0);
+        }
+    }
+
+    /**
+     * Build the HTML for the edit scores form
+     * @returns {string} HTML string
+     */
+    buildEditScoresFormHTML() {
+        const handsOptions = this.currentGame.hands
+            .map((hand, idx) => `<option value="${idx}">Round #${hand.handNumber}</option>`)
+            .join('');
+
+        return `
+            <h2>Edit Prior Round Scores</h2>
+            <form id="edit-scores-form">
+                <label for="edit-round-select">Select Round:</label>
+                <select id="edit-round-select">${handsOptions}</select>
+                <div id="edit-round-fields"></div>
+                <button type="submit" class="primary-button" style="margin-top:16px;">Save Changes</button>
+                <button type="button" id="cancel-edit-scores" class="secondary-button" style="margin-left:8px;">Cancel</button>
+            </form>
+        `;
+    }
+
+    /**
+     * Initialize event handlers for the edit scores modal
+     * @param {HTMLElement} modal - Modal element
+     */
+    initializeEditScoresHandlers(modal) {
+        // Round selection handler
+        const roundSelect = DOM.getById('edit-round-select');
+        if (roundSelect) {
+            DOM.on(roundSelect, 'change', (e) => {
+                this.renderRoundFields(parseInt(e.target.value));
+            });
+        }
+
+        // Cancel button handler
+        const cancelBtn = DOM.getById('cancel-edit-scores');
+        if (cancelBtn) {
+            DOM.on(cancelBtn, 'click', () => {
+                modal.remove();
+            });
+        }
+
+        // Form submission handler
+        const form = DOM.getById('edit-scores-form');
+        if (form) {
+            DOM.on(form, 'submit', (e) => {
+                e.preventDefault();
+                this.saveEditedScores(modal);
+            });
+        }
+
+        // Modal background click to close
+        DOM.on(modal, 'click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    /**
+     * Render the input fields for a specific round
+     * @param {number} roundIdx - Index of the round to edit
+     */
+    renderRoundFields(roundIdx) {
+        const hand = this.currentGame.hands[roundIdx];
+        const fieldsContainer = DOM.getById('edit-round-fields');
+        
+        if (!fieldsContainer || !hand) return;
+
+        let fieldsHTML = `<h4>Hand ${hand.handNumber}</h4>`;
+        fieldsHTML += `
+            <div style="margin-bottom: 16px;">
+                <label>Winning Bid: 
+                    <input type="number" name="winning-bid-${roundIdx}" value="${hand.winningBid || 0}" 
+                           style="width:80px;" step="10" min="0">
+                </label>
+            </div>
+        `;
+
+        // Add fields for each player
+        this.currentGame.players.forEach(player => {
+            const meld = hand.playerMeld[player.id] || 0;
+            const tricks = Math.round((hand.playerScores[player.id] || 0) / 10);
+            
+            fieldsHTML += `
+                <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <strong>${player.name}</strong><br>
+                    <label>Meld: 
+                        <input type="number" name="meld-${roundIdx}-${player.id}" value="${meld}" 
+                               style="width:80px;" step="10" min="0">
+                    </label>
+                    <label style="margin-left: 16px;">Tricks: 
+                        <input type="number" name="tricks-${roundIdx}-${player.id}" value="${tricks}" 
+                               min="0" max="25" style="width:60px;" step="1">
+                    </label>
+                </div>
+            `;
+        });
+
+        DOM.setHTML(fieldsContainer, fieldsHTML);
+    }
+
+    /**
+     * Save the edited scores and recalculate
+     * @param {HTMLElement} modal - Modal element to close
+     */
+    saveEditedScores(modal) {
+        try {
+            const roundSelect = DOM.getById('edit-round-select');
+            const roundIdx = parseInt(roundSelect.value);
+            const hand = this.currentGame.hands[roundIdx];
+
+            // Update winning bid
+            const bidInput = DOM.query(`[name='winning-bid-${roundIdx}']`);
+            if (bidInput) {
+                hand.winningBid = parseInt(bidInput.value) || 0;
+            }
+
+            // Update player meld and scores
+            this.currentGame.players.forEach(player => {
+                const meldInput = DOM.query(`[name='meld-${roundIdx}-${player.id}']`);
+                const tricksInput = DOM.query(`[name='tricks-${roundIdx}-${player.id}']`);
+                
+                if (meldInput) {
+                    hand.playerMeld[player.id] = parseInt(meldInput.value) || 0;
+                }
+                if (tricksInput) {
+                    hand.playerScores[player.id] = (parseInt(tricksInput.value) || 0) * 10;
+                }
+            });
+
+            // Recalculate all scores using the existing method
+            this.currentGame.recalculateScores();
+
+            // Save to storage
+            storageService.saveCurrentGame(this.currentGame);
+
+            // Update the UI
+            this.updateScoreboard();
+
+            // Close modal and show success message
+            modal.remove();
+            notificationService.success('Scores updated successfully');
+
+        } catch (error) {
+            console.error('Failed to save edited scores:', error);
+            notificationService.error('Failed to save changes');
+        }
     }
 
     /**
