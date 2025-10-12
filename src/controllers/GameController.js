@@ -940,11 +940,7 @@ class GameController {
         if (endGameBtn) {
             DOM.on(endGameBtn, 'click', () => {
                 modal.remove();
-                if (notificationService.confirm(
-                    `${winnerName} has reached ${this.currentGame.targetScore} points and wins!\n\nEnd the game now?`
-                )) {
-                    this.endGame();
-                }
+                this.confirmEndGame();
             });
         }
 
@@ -976,9 +972,45 @@ class GameController {
     }
 
     /**
-     * End the current game
+     * End the current game - shows final score modal first
      */
     endGame() {
+        if (!this.currentGame) return;
+
+        try {
+            // Determine the winner to show in the final score modal
+            let winner;
+            let winnerName;
+            let winnerScore;
+            
+            // Check for team or individual winner
+            const gameWinner = this.currentGame.checkForWinner();
+            if (gameWinner && gameWinner.type === 'team') {
+                // Team winner
+                winnerName = gameWinner.teamName;
+                winnerScore = gameWinner.score;
+            } else {
+                // Individual winner (highest score)
+                winner = this.currentGame.scores.reduce((prev, current) => 
+                    (prev.score > current.score) ? prev : current
+                );
+                winnerName = winner.name;
+                winnerScore = winner.score;
+            }
+
+            // Show the final score modal instead of immediately ending
+            this.showFinalScoreModal(winnerName, winnerScore);
+
+        } catch (error) {
+            console.error('Failed to show final score:', error);
+            notificationService.error('Failed to show final score');
+        }
+    }
+
+    /**
+     * Actually end the game (called from final score modal)
+     */
+    confirmEndGame() {
         if (!this.currentGame) return;
 
         if (!notificationService.confirm('Are you sure you want to end this game?')) {
