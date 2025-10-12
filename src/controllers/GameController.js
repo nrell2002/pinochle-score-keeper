@@ -1034,30 +1034,11 @@ class GameController {
         // Create modal
         const modal = document.createElement('div');
         modal.id = 'edit-scores-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        `;
+        modal.classList.add('edit-scores-modal');
 
         // Create modal content
         const modalContent = document.createElement('div');
-        modalContent.style.cssText = `
-            background: #fff;
-            padding: 24px;
-            border-radius: 8px;
-            max-width: 900px;
-            width: 100%;
-            overflow: auto;
-            max-height: 80vh;
-        `;
+        modalContent.classList.add('edit-scores-modal-content');
 
         // Build the form HTML
         const formHTML = this.buildEditScoresFormHTML();
