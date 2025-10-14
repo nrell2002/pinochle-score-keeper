@@ -1267,34 +1267,46 @@ class GameController {
         if (!fieldsContainer || !hand) return;
 
         let fieldsHTML = `<h4>Hand ${hand.handNumber}</h4>`;
-        fieldsHTML += `
-            <div style="margin-bottom: 16px;">
-                <label>Winning Bid: 
-                    <input type="number" name="winning-bid-${roundIdx}" value="${hand.winningBid || 0}" 
-                           style="width:80px;" step="10" min="0">
-                </label>
-            </div>
-        `;
-
-        // Add fields for each player
-        this.currentGame.players.forEach(player => {
-            const meld = hand.playerMeld[player.id] || 0;
-            const tricks = Math.round((hand.playerScores[player.id] || 0) / 10);
-            
+        
+        // Check if this is a thrown-in hand (not editable)
+        if (hand.thrownIn) {
             fieldsHTML += `
-                <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    <strong>${player.name}</strong><br>
-                    <label>Meld: 
-                        <input type="number" name="meld-${roundIdx}-${player.id}" value="${meld}" 
+                <div style="padding: 16px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; margin-bottom: 16px;">
+                    <p style="margin: 0; color: #e74c3c; font-weight: bold; text-align: center;">
+                        <em>This hand was thrown in (no bids) - Cannot be edited</em>
+                    </p>
+                </div>
+            `;
+        } else {
+            fieldsHTML += `
+                <div style="margin-bottom: 16px;">
+                    <label>Winning Bid: 
+                        <input type="number" name="winning-bid-${roundIdx}" value="${hand.winningBid || 0}" 
                                style="width:80px;" step="10" min="0">
-                    </label>
-                    <label style="margin-left: 16px;">Tricks: 
-                        <input type="number" name="tricks-${roundIdx}-${player.id}" value="${tricks}" 
-                               min="0" max="25" style="width:60px;" step="1">
                     </label>
                 </div>
             `;
-        });
+
+            // Add fields for each player
+            this.currentGame.players.forEach(player => {
+                const meld = hand.playerMeld[player.id] || 0;
+                const tricks = Math.round((hand.playerScores[player.id] || 0) / 10);
+                
+                fieldsHTML += `
+                    <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <strong>${player.name}</strong><br>
+                        <label>Meld: 
+                            <input type="number" name="meld-${roundIdx}-${player.id}" value="${meld}" 
+                                   style="width:80px;" step="10" min="0">
+                        </label>
+                        <label style="margin-left: 16px;">Tricks: 
+                            <input type="number" name="tricks-${roundIdx}-${player.id}" value="${tricks}" 
+                                   min="0" max="25" style="width:60px;" step="1">
+                        </label>
+                    </div>
+                `;
+            });
+        }
 
         DOM.setHTML(fieldsContainer, fieldsHTML);
     }
@@ -1308,6 +1320,12 @@ class GameController {
             const roundSelect = DOM.getById('edit-round-select');
             const roundIdx = parseInt(roundSelect.value);
             const hand = this.currentGame.hands[roundIdx];
+
+            // Prevent editing thrown-in hands
+            if (hand.thrownIn) {
+                notificationService.warning('Cannot edit thrown-in hands');
+                return;
+            }
 
             // Update winning bid
             const bidInput = DOM.query(`[name='winning-bid-${roundIdx}']`);
