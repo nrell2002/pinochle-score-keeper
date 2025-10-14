@@ -756,19 +756,261 @@ class GameController {
             notificationService.gameWin(winnerName, winnerScore);
             
             setTimeout(() => {
-                if (notificationService.confirm(
-                    `${winnerName} has reached ${this.currentGame.targetScore} points and wins!\n\nEnd the game now?`
-                )) {
-                    this.endGame();
-                }
+                this.showFinalScoreModal(winnerName, winnerScore);
             }, 1500);
         }
     }
 
     /**
-     * End the current game
+     * Show final score modal before ending the game
+     * @param {string} winnerName - Name of the winner
+     * @param {number} winnerScore - Winner's score
+     */
+    showFinalScoreModal(winnerName, winnerScore) {
+        // Remove existing modal if it exists
+        const existingModal = DOM.getById('final-score-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'final-score-modal';
+        modal.classList.add('final-score-modal');
+
+        // Create modal content
+        const modalContent = document.createElement('div');
+        modalContent.classList.add('final-score-modal-content');
+
+        // Create header
+        const header = document.createElement('div');
+        header.classList.add('final-score-header');
+        header.innerHTML = `
+            <h2>🎉 Game Complete!</h2>
+            <p><strong>${winnerName}</strong> wins with <strong>${winnerScore}</strong> points!</p>
+        `;
+
+        // Create scoreboard container
+        const scoreboardContainer = document.createElement('div');
+        scoreboardContainer.classList.add('final-score-scoreboard');
+        scoreboardContainer.innerHTML = '<h3>Final Scores</h3>';
+        
+        // Generate the same scoreboard HTML
+        const scoreboardTable = document.createElement('div');
+        scoreboardTable.innerHTML = this.generateScoreboardHTML();
+        scoreboardContainer.appendChild(scoreboardTable);
+
+        // Create actions
+        const actions = document.createElement('div');
+        actions.classList.add('final-score-actions');
+        actions.innerHTML = `
+            <button id="end-game-confirm" class="primary-button">End Game</button>
+            <button id="continue-playing" class="secondary-button">Continue Playing</button>
+        `;
+
+        modalContent.appendChild(header);
+        modalContent.appendChild(scoreboardContainer);
+        modalContent.appendChild(actions);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Add event listeners
+        this.initializeFinalScoreHandlers(modal, winnerName);
+    }
+
+    /**
+     * Generate scoreboard HTML (reusable from updateScoreboard)
+     * @returns {string} HTML string for the scoreboard
+     */
+    generateScoreboardHTML() {
+        if (!this.currentGame) return '';
+
+        const players = this.currentGame.players;
+        const scores = this.currentGame.scores;
+        const hands = this.currentGame.hands;
+        const is4PlayerTeamGame = this.currentGame.gameType === 4 && this.currentGame.teamAssignments;
+
+        let html = '<table><thead><tr><th>Round / Winning Bid</th>';
+        
+        // Header row with player names and team colors for 4-player games
+        if (is4PlayerTeamGame) {
+            for (const player of players) {
+                const teamClass = this.getPlayerTeamClass(player.id);
+                html += `<th class="${teamClass}">${player.name}</th>`;
+            }
+            // Add team total columns
+            html += '<th class="team-a-header">Team A Total</th>';
+            html += '<th class="team-b-header">Team B Total</th>';
+        } else {
+            for (const player of players) {
+                html += `<th>${player.name}</th>`;
+            }
+        }
+        html += '</tr></thead><tbody>';
+
+        // Hand rows
+        hands.forEach(hand => {
+            let roundInfo = `#${hand.handNumber}`;
+            if (hand.winningBid) {
+                roundInfo += ` | Bid: ${hand.winningBid}`;
+                if (hand.bidderName) {
+                    roundInfo += ` (${hand.bidderName})`;
+                }
+            }
+
+            html += `<tr><td>${roundInfo}</td>`;
+
+            if (hand.thrownIn) {
+                const colSpan = is4PlayerTeamGame ? players.length + 2 : players.length;
+                html += `<td colspan="${colSpan}" style="color:#e74c3c;font-weight:bold;">Thrown In (No Bids)</td>`;
+            } else {
+                // Player scores
+                for (const player of players) {
+                    const meld = hand.playerMeld[player.id] || 0;
+                    const score = hand.playerScores[player.id] || 0;
+                    const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
+                    html += `<td class="${teamClass}">Meld: ${meld}<br>Score: ${score}</td>`;
+                }
+                
+                // Team totals for this hand (4-player only)
+                if (is4PlayerTeamGame) {
+                    const teamAHandTotal = this.currentGame.teamAssignments.teamA.reduce((total, player) => {
+                        const meld = hand.playerMeld[player.id] || 0;
+                        const score = hand.playerScores[player.id] || 0;
+                        return total + meld + score;
+                    }, 0);
+                    
+                    const teamBHandTotal = this.currentGame.teamAssignments.teamB.reduce((total, player) => {
+                        const meld = hand.playerMeld[player.id] || 0;
+                        const score = hand.playerScores[player.id] || 0;
+                        return total + meld + score;
+                    }, 0);
+                    
+                    html += `<td class="team-a-cell"><b>${teamAHandTotal}</b></td>`;
+                    html += `<td class="team-b-cell"><b>${teamBHandTotal}</b></td>`;
+                }
+            }
+            html += '</tr>';
+        });
+
+        // Totals row
+        html += '<tr class="totals-row"><td><b>Total</b></td>';
+        for (const player of players) {
+            const total = scores.find(s => s.playerId === player.id).score;
+            const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
+            html += `<td class="${teamClass}"><b>${total}</b></td>`;
+        }
+        
+        // Team grand totals (4-player only)
+        if (is4PlayerTeamGame) {
+            const teamScores = this.currentGame.getTeamScores();
+            html += `<td class="team-a-total"><b>${teamScores.teamA}</b></td>`;
+            html += `<td class="team-b-total"><b>${teamScores.teamB}</b></td>`;
+        }
+        
+        html += '</tr></tbody></table>';
+
+        // Add team legend for 4-player games
+        if (is4PlayerTeamGame) {
+            html += `
+                <div class="team-legend" style="margin-top: 15px;">
+                    <div class="team-indicator">
+                        <div class="team-color team-a"></div>
+                        <span>Team A: ${this.currentGame.teamAssignments.teamA.map(p => p.name).join(' & ')}</span>
+                    </div>
+                    <div class="team-indicator">
+                        <div class="team-color team-b"></div>
+                        <span>Team B: ${this.currentGame.teamAssignments.teamB.map(p => p.name).join(' & ')}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        return html;
+    }
+
+    /**
+     * Initialize event handlers for the final score modal
+     * @param {HTMLElement} modal - Modal element
+     * @param {string} winnerName - Name of the winner
+     */
+    initializeFinalScoreHandlers(modal, winnerName) {
+        // End game button handler
+        const endGameBtn = DOM.getById('end-game-confirm');
+        if (endGameBtn) {
+            DOM.on(endGameBtn, 'click', () => {
+                modal.remove();
+                this.confirmEndGame();
+            });
+        }
+
+        // Continue playing button handler
+        const continueBtn = DOM.getById('continue-playing');
+        if (continueBtn) {
+            DOM.on(continueBtn, 'click', () => {
+                modal.remove();
+                // Just close the modal and continue the game
+            });
+        }
+
+        // Modal background click to close
+        DOM.on(modal, 'click', (e) => {
+            if (e.target === modal) {
+                // Treat background click as "continue playing"
+                modal.remove();
+            }
+        });
+
+        // Escape key to close
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    /**
+     * End the current game - shows final score modal first
      */
     endGame() {
+        if (!this.currentGame) return;
+
+        try {
+            // Determine the winner to show in the final score modal
+            let winner;
+            let winnerName;
+            let winnerScore;
+            
+            // Check for team or individual winner
+            const gameWinner = this.currentGame.checkForWinner();
+            if (gameWinner && gameWinner.type === 'team') {
+                // Team winner
+                winnerName = gameWinner.teamName;
+                winnerScore = gameWinner.score;
+            } else {
+                // Individual winner (highest score)
+                winner = this.currentGame.scores.reduce((prev, current) => 
+                    (prev.score > current.score) ? prev : current
+                );
+                winnerName = winner.name;
+                winnerScore = winner.score;
+            }
+
+            // Show the final score modal instead of immediately ending
+            this.showFinalScoreModal(winnerName, winnerScore);
+
+        } catch (error) {
+            console.error('Failed to show final score:', error);
+            notificationService.error('Failed to show final score');
+        }
+    }
+
+    /**
+     * Actually end the game (called from final score modal)
+     */
+    confirmEndGame() {
         if (!this.currentGame) return;
 
         if (!notificationService.confirm('Are you sure you want to end this game?')) {
@@ -828,108 +1070,7 @@ class GameController {
         if (!this.currentGame || !this.elements.scoreboard) return;
 
         try {
-            const players = this.currentGame.players;
-            const scores = this.currentGame.scores;
-            const hands = this.currentGame.hands;
-            const is4PlayerTeamGame = this.currentGame.gameType === 4 && this.currentGame.teamAssignments;
-
-            let html = '<table><thead><tr><th>Round / Winning Bid</th>';
-            
-            // Header row with player names and team colors for 4-player games
-            if (is4PlayerTeamGame) {
-                for (const player of players) {
-                    const playerIndex = players.findIndex(p => p.id === player.id);
-                    const teamClass = this.getPlayerTeamClass(player.id);
-                    html += `<th class="${teamClass}">${player.name}</th>`;
-                }
-                // Add team total columns
-                html += '<th class="team-a-header">Team A Total</th>';
-                html += '<th class="team-b-header">Team B Total</th>';
-            } else {
-                for (const player of players) {
-                    html += `<th>${player.name}</th>`;
-                }
-            }
-            html += '</tr></thead><tbody>';
-
-            // Hand rows
-            hands.forEach(hand => {
-                let roundInfo = `#${hand.handNumber}`;
-                if (hand.winningBid) {
-                    roundInfo += ` | Bid: ${hand.winningBid}`;
-                    if (hand.bidderName) {
-                        roundInfo += ` (${hand.bidderName})`;
-                    }
-                }
-
-                html += `<tr><td>${roundInfo}</td>`;
-
-                if (hand.thrownIn) {
-                    const colSpan = is4PlayerTeamGame ? players.length + 2 : players.length;
-                    html += `<td colspan="${colSpan}" style="color:#e74c3c;font-weight:bold;">Thrown In (No Bids)</td>`;
-                } else {
-                    // Player scores
-                    for (const player of players) {
-                        const meld = hand.playerMeld[player.id] || 0;
-                        const score = hand.playerScores[player.id] || 0;
-                        const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
-                        html += `<td class="${teamClass}">Meld: ${meld}<br>Score: ${score}</td>`;
-                    }
-                    
-                    // Team totals for this hand (4-player only)
-                    if (is4PlayerTeamGame) {
-                        const teamAHandTotal = this.currentGame.teamAssignments.teamA.reduce((total, player) => {
-                            const meld = hand.playerMeld[player.id] || 0;
-                            const score = hand.playerScores[player.id] || 0;
-                            return total + meld + score;
-                        }, 0);
-                        
-                        const teamBHandTotal = this.currentGame.teamAssignments.teamB.reduce((total, player) => {
-                            const meld = hand.playerMeld[player.id] || 0;
-                            const score = hand.playerScores[player.id] || 0;
-                            return total + meld + score;
-                        }, 0);
-                        
-                        html += `<td class="team-a-cell"><b>${teamAHandTotal}</b></td>`;
-                        html += `<td class="team-b-cell"><b>${teamBHandTotal}</b></td>`;
-                    }
-                }
-                html += '</tr>';
-            });
-
-            // Totals row
-            html += '<tr class="totals-row"><td><b>Total</b></td>';
-            for (const player of players) {
-                const total = scores.find(s => s.playerId === player.id).score;
-                const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
-                html += `<td class="${teamClass}"><b>${total}</b></td>`;
-            }
-            
-            // Team grand totals (4-player only)
-            if (is4PlayerTeamGame) {
-                const teamScores = this.currentGame.getTeamScores();
-                html += `<td class="team-a-total"><b>${teamScores.teamA}</b></td>`;
-                html += `<td class="team-b-total"><b>${teamScores.teamB}</b></td>`;
-            }
-            
-            html += '</tr></tbody></table>';
-
-            // Add team legend for 4-player games
-            if (is4PlayerTeamGame) {
-                html += `
-                    <div class="team-legend" style="margin-top: 15px;">
-                        <div class="team-indicator">
-                            <div class="team-color team-a"></div>
-                            <span>Team A: ${this.currentGame.teamAssignments.teamA.map(p => p.name).join(' & ')}</span>
-                        </div>
-                        <div class="team-indicator">
-                            <div class="team-color team-b"></div>
-                            <span>Team B: ${this.currentGame.teamAssignments.teamB.map(p => p.name).join(' & ')}</span>
-                        </div>
-                    </div>
-                `;
-            }
-
+            const html = this.generateScoreboardHTML();
             DOM.setHTML(this.elements.scoreboard, html);
             eventService.emit(EVENTS.SCOREBOARD_UPDATED, this.currentGame);
 
