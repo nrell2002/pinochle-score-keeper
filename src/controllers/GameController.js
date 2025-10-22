@@ -939,9 +939,18 @@ class GameController {
                     // Check if this player is the bidder for hand result
                     const isBidder = player.id === hand.bidderId;
                     let handResult = '';
+                    let displayTotal = handTotal;
                     if (isBidder && hand.winningBid) {
                         const bidderTotal = meld + score;
-                        handResult = bidderTotal >= hand.winningBid ? 'Success' : 'Set';
+                        if (bidderTotal >= hand.winningBid) {
+                            handResult = 'Success';
+                            // For successful bids, show actual total points earned
+                            displayTotal = handTotal;
+                        } else {
+                            handResult = 'Set';
+                            // For set bids, show negative bid amount (what actually gets added to score)
+                            displayTotal = -hand.winningBid;
+                        }
                     }
                     
                     // Build the cell content
@@ -949,7 +958,7 @@ class GameController {
                     if (handResult) {
                         cellContent += `<br><strong>${handResult}</strong>`;
                     }
-                    cellContent += `<br>Total: ${handTotal}`;
+                    cellContent += `<br>Total: ${displayTotal}`;
                     
                     html += `<td class="${teamClass}">${cellContent}</td>`;
                 }
