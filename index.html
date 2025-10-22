@@ -163,6 +163,19 @@
     <script type="module">
         import PinochleScoreKeeperApp from './src/App.js';
         
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
         // Initialize the application when DOM is loaded
         window.addEventListener('DOMContentLoaded', () => {
             new PinochleScoreKeeperApp();
