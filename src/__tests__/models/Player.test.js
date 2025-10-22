@@ -77,26 +77,72 @@ describe('Player', () => {
     });
   });
 
-  describe('getAverageMeld', () => {
-    test('should return 0 when no games played', () => {
+  describe('getAverageMeldPerHand', () => {
+    test('should return 0 when no hands played', () => {
       const player = new Player('Test Player');
-      expect(player.getAverageMeld()).toBe(0);
+      expect(player.getAverageMeldPerHand()).toBe(0);
     });
 
-    test('should calculate correct average meld', () => {
+    test('should calculate correct average meld per hand', () => {
       const player = new Player('Test Player');
-      player.gamesPlayed = 5;
+      player.handsPlayed = 5;
       player.totalMeld = 500;
       
-      expect(player.getAverageMeld()).toBe(100);
+      expect(player.getAverageMeldPerHand()).toBe(100);
     });
 
-    test('should round average meld to nearest integer', () => {
+    test('should round average meld per hand to nearest integer', () => {
       const player = new Player('Test Player');
-      player.gamesPlayed = 3;
+      player.handsPlayed = 3;
       player.totalMeld = 200;
       
-      expect(player.getAverageMeld()).toBe(67); // 66.66... rounded to 67
+      expect(player.getAverageMeldPerHand()).toBe(67); // 66.66... rounded to 67
+    });
+  });
+
+  describe('getBiddingSuccessRate', () => {
+    test('should return 0 when no bids made', () => {
+      const player = new Player('Test Player');
+      expect(player.getBiddingSuccessRate()).toBe(0);
+    });
+
+    test('should calculate correct bidding success rate', () => {
+      const player = new Player('Test Player');
+      player.totalBids = 10;
+      player.successfulBids = 7;
+      
+      expect(player.getBiddingSuccessRate()).toBe(70);
+    });
+
+    test('should round bidding success rate to nearest integer', () => {
+      const player = new Player('Test Player');
+      player.totalBids = 3;
+      player.successfulBids = 2;
+      
+      expect(player.getBiddingSuccessRate()).toBe(67); // 66.66... rounded to 67
+    });
+  });
+
+  describe('getAverageTricksPerHand', () => {
+    test('should return 0 when no hands played', () => {
+      const player = new Player('Test Player');
+      expect(player.getAverageTricksPerHand()).toBe(0);
+    });
+
+    test('should calculate correct average tricks per hand', () => {
+      const player = new Player('Test Player');
+      player.handsPlayed = 4;
+      player.totalTricks = 50; // Total tricks taken
+      
+      expect(player.getAverageTricksPerHand()).toBe(12.5);
+    });
+
+    test('should round average tricks per hand to one decimal', () => {
+      const player = new Player('Test Player');
+      player.handsPlayed = 3;
+      player.totalTricks = 38; // 38 / 3 = 12.666...
+      
+      expect(player.getAverageTricksPerHand()).toBe(12.7);
     });
   });
 
@@ -134,30 +180,34 @@ describe('Player', () => {
   describe('updateHandStats', () => {
     test('should update meld and highest hand without bid', () => {
       const player = new Player('Test Player');
-      player.updateHandStats(50, 180);
+      player.updateHandStats(50, 180, 130); // meld, handScore, tricks
       
       expect(player.totalMeld).toBe(50);
       expect(player.highestHand).toBe(180);
       expect(player.highestBid).toBe(0);
+      expect(player.handsPlayed).toBe(1);
+      expect(player.totalTricks).toBe(13); // 130 / 10
     });
 
     test('should update bid when player is bidder', () => {
       const player = new Player('Test Player');
-      player.updateHandStats(40, 200, 300);
+      player.updateHandStats(40, 200, 160, 300, true); // meld, handScore, tricks, bid, bidSuccessful
       
       expect(player.totalMeld).toBe(40);
       expect(player.highestHand).toBe(200);
       expect(player.highestBid).toBe(300);
+      expect(player.totalBids).toBe(1);
+      expect(player.successfulBids).toBe(1);
     });
 
     test('should only update highest hand when new hand is higher', () => {
       const player = new Player('Test Player');
       player.highestHand = 250;
       
-      player.updateHandStats(30, 180); // Lower than current highest
+      player.updateHandStats(30, 180, 150); // Lower than current highest
       expect(player.highestHand).toBe(250);
       
-      player.updateHandStats(40, 280); // Higher than current highest
+      player.updateHandStats(40, 280, 240); // Higher than current highest
       expect(player.highestHand).toBe(280);
     });
 
@@ -165,20 +215,21 @@ describe('Player', () => {
       const player = new Player('Test Player');
       player.highestBid = 350;
       
-      player.updateHandStats(30, 180, 300); // Lower bid
+      player.updateHandStats(30, 180, 150, 300, false); // Lower bid
       expect(player.highestBid).toBe(350);
       
-      player.updateHandStats(40, 180, 400); // Higher bid
+      player.updateHandStats(40, 180, 140, 400, true); // Higher bid
       expect(player.highestBid).toBe(400);
     });
 
     test('should accumulate meld correctly', () => {
       const player = new Player('Test Player');
-      player.updateHandStats(50, 180);
-      player.updateHandStats(30, 160);
-      player.updateHandStats(70, 200);
+      player.updateHandStats(50, 180, 130);
+      player.updateHandStats(30, 160, 130);
+      player.updateHandStats(70, 200, 130);
       
       expect(player.totalMeld).toBe(150);
+      expect(player.handsPlayed).toBe(3);
     });
   });
 
@@ -192,7 +243,11 @@ describe('Player', () => {
         totalScore: 4500,
         highestHand: 280,
         highestBid: 420,
-        totalMeld: 400
+        totalMeld: 400,
+        handsPlayed: 10,
+        totalBids: 2,
+        successfulBids: 1,
+        totalTricks: 45
       };
       
       const player = Player.fromData(data);
@@ -205,6 +260,10 @@ describe('Player', () => {
       expect(player.highestHand).toBe(280);
       expect(player.highestBid).toBe(420);
       expect(player.totalMeld).toBe(400);
+      expect(player.handsPlayed).toBe(10);
+      expect(player.totalBids).toBe(2);
+      expect(player.successfulBids).toBe(1);
+      expect(player.totalTricks).toBe(45);
     });
 
     test('should handle missing properties with defaults', () => {
@@ -223,6 +282,10 @@ describe('Player', () => {
       expect(player.highestHand).toBe(0);
       expect(player.highestBid).toBe(0);
       expect(player.totalMeld).toBe(0);
+      expect(player.handsPlayed).toBe(0);
+      expect(player.totalBids).toBe(0);
+      expect(player.successfulBids).toBe(0);
+      expect(player.totalTricks).toBe(0);
     });
   });
 
@@ -246,14 +309,18 @@ describe('Player', () => {
         totalScore: 1800,
         highestHand: 240,
         highestBid: 360,
-        totalMeld: 120
+        totalMeld: 120,
+        handsPlayed: 0,
+        totalBids: 0,
+        successfulBids: 0,
+        totalTricks: 0
       });
     });
 
     test('should create data object that can recreate identical player', () => {
       const originalPlayer = new Player('Round Trip');
       originalPlayer.updateGameStats(true, 1500);
-      originalPlayer.updateHandStats(60, 220, 380);
+      originalPlayer.updateHandStats(60, 220, 160, 380, true);
       
       const data = originalPlayer.toData();
       const recreatedPlayer = Player.fromData(data);
@@ -266,6 +333,10 @@ describe('Player', () => {
       expect(recreatedPlayer.highestHand).toBe(originalPlayer.highestHand);
       expect(recreatedPlayer.highestBid).toBe(originalPlayer.highestBid);
       expect(recreatedPlayer.totalMeld).toBe(originalPlayer.totalMeld);
+      expect(recreatedPlayer.handsPlayed).toBe(originalPlayer.handsPlayed);
+      expect(recreatedPlayer.totalBids).toBe(originalPlayer.totalBids);
+      expect(recreatedPlayer.successfulBids).toBe(originalPlayer.successfulBids);
+      expect(recreatedPlayer.totalTricks).toBe(originalPlayer.totalTricks);
     });
   });
 });
