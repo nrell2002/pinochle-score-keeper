@@ -1,0 +1,44 @@
+{
+  "name": "com.nrell2002.pinochle",
+  "displayName": "Pinochle Score Keeper",
+  "version": "1.0.0",
+  "description": "Keep track of your pinochle game scores and player statistics. A responsive mobile app for pinochle players.",
+  "main": "index.js",
+  "scripts": {
+    "build": "cordova build ios",
+    "build:release": "cordova build ios --release",
+    "emulate": "cordova emulate ios",
+    "run:device": "cordova run ios --device",
+    "prepare": "cordova prepare ios",
+    "clean": "cordova clean ios",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "pinochle",
+    "card-game",
+    "score-keeper",
+    "ios",
+    "mobile-app"
+  ],
+  "author": "nrell2002",
+  "license": "MIT",
+  "devDependencies": {
+    "cordova-ios": "^7.1.1",
+    "cordova-plugin-device": "^3.0.0",
+    "cordova-plugin-splashscreen": "^6.0.2",
+    "cordova-plugin-statusbar": "^4.0.0",
+    "cordova-plugin-whitelist": "^1.3.5"
+  },
+  "cordova": {
+    "platforms": [
+      "ios"
+    ],
+    "plugins": {
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-splashscreen": {},
+      "cordova-plugin-device": {},
+      "cordova-plugin-whitelist": {}
+    }
+  }
+}
