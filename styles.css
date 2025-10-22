@@ -232,6 +232,22 @@ button {
     gap: 10px;
 }
 
+.player-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nines-only-label {
+    font-size: 0.9rem;
+    color: var(--light-text);
+    padding-left: 0;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .player-input label {
     flex: 1;
     font-weight: 600;
@@ -308,10 +324,6 @@ button {
     
     .input-group label {
         flex: 0 0 150px;
-    }
-    
-    .player-input {
-        grid-template-columns: 1fr auto;
     }
     
     .meld-inputs,

@@ -420,9 +420,11 @@ class GameController {
                     </label>`;
                 }
                 return `
-                    <div class="player-input">
-                        <label>${p.name} Meld:</label>
-                        <input type="number" id="meld-${p.id}" min="0" step="10" value="0">
+                    <div class="player-input-container">
+                        <div class="player-input">
+                            <label>${p.name} Meld:</label>
+                            <input type="number" id="meld-${p.id}" min="0" step="10" value="0">
+                        </div>
                         ${checkbox}
                     </div>
                 `;
