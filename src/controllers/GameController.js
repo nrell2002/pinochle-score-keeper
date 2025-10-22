@@ -71,6 +71,8 @@ class GameController {
             throwInHandBtn: DOM.getById('throw-in-hand'),
             shotMoonBtn: DOM.getById('shot-the-moon'),
             endGameBtn: DOM.getById('end-game'),
+            backToBidBtn: DOM.getById('back-to-bid'),
+            backToMeldBtn: DOM.getById('back-to-meld'),
             
             // Moon options
             moonOptions: DOM.getById('moon-options'),
@@ -130,6 +132,15 @@ class GameController {
 
         if (this.elements.editScoresBtn) {
             DOM.on(this.elements.editScoresBtn, 'click', () => this.showEditScores());
+        }
+
+        // Back navigation buttons
+        if (this.elements.backToBidBtn) {
+            DOM.on(this.elements.backToBidBtn, 'click', () => this.backToBidPhase());
+        }
+
+        if (this.elements.backToMeldBtn) {
+            DOM.on(this.elements.backToMeldBtn, 'click', () => this.backToMeldPhase());
         }
 
         // External events
@@ -520,6 +531,9 @@ class GameController {
             DOM.setText(this.elements.meldWinningBid, 
                 `${winningBid} (${this.pendingHand.bidderName})`);
 
+            // Update meld inputs to reflect any bidder changes
+            this.updateMeldScoreInputs();
+
             eventService.emit(EVENTS.HAND_STARTED, this.pendingHand);
         } catch (error) {
             console.error('Failed to proceed to meld phase:', error);
@@ -557,6 +571,56 @@ class GameController {
         } catch (error) {
             console.error('Failed to proceed to score phase:', error);
             notificationService.error('Failed to proceed to score phase');
+        }
+    }
+
+    /**
+     * Go back to bid phase from meld phase
+     */
+    backToBidPhase() {
+        if (!this.currentGame) return;
+
+        try {
+            // Show bid section, hide meld section
+            DOM.show(this.elements.handStartSection);
+            DOM.hide(this.elements.meldSectionCard);
+
+            // Restore previous values if they exist
+            if (this.pendingHand) {
+                if (this.elements.winningBidInput) {
+                    this.elements.winningBidInput.value = this.pendingHand.winningBid || '';
+                }
+                if (this.elements.bidderSelect && this.pendingHand.bidderId) {
+                    this.elements.bidderSelect.value = this.pendingHand.bidderId;
+                }
+            }
+
+            eventService.emit('hand-phase-changed', 'bid');
+        } catch (error) {
+            console.error('Failed to go back to bid phase:', error);
+            notificationService.error('Failed to go back to bid phase');
+        }
+    }
+
+    /**
+     * Go back to meld phase from score phase
+     */
+    backToMeldPhase() {
+        if (!this.currentGame || !this.pendingHand) return;
+
+        try {
+            // Show meld section, hide score section
+            DOM.hide(this.elements.scoreSectionCard);
+            DOM.show(this.elements.meldSectionCard);
+
+            // Update meld display
+            DOM.setText(this.elements.meldWinningBid, 
+                `${this.pendingHand.winningBid} (${this.pendingHand.bidderName})`);
+
+            eventService.emit('hand-phase-changed', 'meld');
+        } catch (error) {
+            console.error('Failed to go back to meld phase:', error);
+            notificationService.error('Failed to go back to meld phase');
         }
     }
 
