@@ -932,8 +932,35 @@ class GameController {
                 for (const player of players) {
                     const meld = hand.playerMeld[player.id] || 0;
                     const score = hand.playerScores[player.id] || 0;
+                    const tricks = score / 10; // Convert score back to tricks for display
+                    const handTotal = meld + score;
                     const teamClass = is4PlayerTeamGame ? this.getPlayerTeamClass(player.id) : '';
-                    html += `<td class="${teamClass}">Meld: ${meld}<br>Score: ${score}</td>`;
+                    
+                    // Check if this player is the bidder for hand result
+                    const isBidder = player.id === hand.bidderId;
+                    let handResult = '';
+                    let displayTotal = handTotal;
+                    if (isBidder && hand.winningBid) {
+                        const bidderTotal = meld + score;
+                        if (bidderTotal >= hand.winningBid) {
+                            handResult = 'Success';
+                            // For successful bids, show actual total points earned
+                            displayTotal = handTotal;
+                        } else {
+                            handResult = 'Set';
+                            // For set bids, show negative bid amount (what actually gets added to score)
+                            displayTotal = -hand.winningBid;
+                        }
+                    }
+                    
+                    // Build the cell content
+                    let cellContent = `Meld: ${meld}<br>Tricks: ${tricks}`;
+                    if (handResult) {
+                        cellContent += `<br><strong>${handResult}</strong>`;
+                    }
+                    cellContent += `<br>Total: ${displayTotal}`;
+                    
+                    html += `<td class="${teamClass}">${cellContent}</td>`;
                 }
                 
                 // Team totals for this hand (4-player only)
