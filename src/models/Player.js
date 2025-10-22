@@ -16,6 +16,10 @@ class Player {
         this.highestHand = 0;
         this.highestBid = 0;
         this.totalMeld = 0;
+        this.handsPlayed = 0;
+        this.totalBids = 0;
+        this.successfulBids = 0;
+        this.totalTricks = 0;
     }
 
     /**
@@ -35,11 +39,27 @@ class Player {
     }
 
     /**
-     * Get player's average meld per game
-     * @returns {number} Average meld
+     * Get player's average meld per hand
+     * @returns {number} Average meld per hand
      */
-    getAverageMeld() {
-        return this.gamesPlayed > 0 ? Math.round(this.totalMeld / this.gamesPlayed) : 0;
+    getAverageMeldPerHand() {
+        return this.handsPlayed > 0 ? Math.round(this.totalMeld / this.handsPlayed) : 0;
+    }
+
+    /**
+     * Get player's bidding success rate as a percentage
+     * @returns {number} Bidding success rate percentage (0-100)
+     */
+    getBiddingSuccessRate() {
+        return this.totalBids > 0 ? Math.round((this.successfulBids / this.totalBids) * 100) : 0;
+    }
+
+    /**
+     * Get player's average tricks per hand
+     * @returns {number} Average tricks per hand
+     */
+    getAverageTricksPerHand() {
+        return this.handsPlayed > 0 ? Math.round((this.totalTricks / this.handsPlayed) * 10) / 10 : 0;
     }
 
     /**
@@ -59,17 +79,27 @@ class Player {
      * Update player statistics after a hand
      * @param {number} meld - Meld points for this hand
      * @param {number} handScore - Hand score (meld + tricks)
+     * @param {number} tricks - Number of tricks taken (in points, divide by 10 for actual trick count)
      * @param {number} [bid] - Winning bid (if this player was the bidder)
+     * @param {boolean} [bidSuccessful] - Whether the bid was successful (if this player was the bidder)
      */
-    updateHandStats(meld, handScore, bid = null) {
+    updateHandStats(meld, handScore, tricks = 0, bid = null, bidSuccessful = null) {
         this.totalMeld += meld;
+        this.handsPlayed++;
+        this.totalTricks += (tricks / 10); // Convert from points to actual trick count
         
         if (handScore > this.highestHand) {
             this.highestHand = handScore;
         }
         
-        if (bid && bid > this.highestBid) {
-            this.highestBid = bid;
+        if (bid !== null) {
+            this.totalBids++;
+            if (bid > this.highestBid) {
+                this.highestBid = bid;
+            }
+            if (bidSuccessful) {
+                this.successfulBids++;
+            }
         }
     }
 
@@ -86,6 +116,10 @@ class Player {
         player.highestHand = data.highestHand || 0;
         player.highestBid = data.highestBid || 0;
         player.totalMeld = data.totalMeld || 0;
+        player.handsPlayed = data.handsPlayed || 0;
+        player.totalBids = data.totalBids || 0;
+        player.successfulBids = data.successfulBids || 0;
+        player.totalTricks = data.totalTricks || 0;
         return player;
     }
 
@@ -102,7 +136,11 @@ class Player {
             totalScore: this.totalScore,
             highestHand: this.highestHand,
             highestBid: this.highestBid,
-            totalMeld: this.totalMeld
+            totalMeld: this.totalMeld,
+            handsPlayed: this.handsPlayed,
+            totalBids: this.totalBids,
+            successfulBids: this.successfulBids,
+            totalTricks: this.totalTricks
         };
     }
 }

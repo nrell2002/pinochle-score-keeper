@@ -708,8 +708,14 @@ class GameController {
             this.currentGame.addHand(hand);
             this.saveCurrentGame();
 
+            // Check if bidder made their bid
+            const bidderMeld = hand.playerMeld[this.pendingHand.bidderId] || 0;
+            const bidderTricks = hand.playerScores[this.pendingHand.bidderId] || 0;
+            const bidderTotal = bidderMeld + bidderTricks;
+            const bidderWon = bidderTotal >= this.pendingHand.winningBid;
+
             // Update player statistics
-            this.updatePlayerHandStats(hand);
+            this.updatePlayerHandStats(hand, bidderWon);
 
             // Reset interface
             this.resetHandInputs();
@@ -1185,21 +1191,32 @@ class GameController {
     /**
      * Update player hand statistics
      * @param {GameHand} hand - Completed hand
+     * @param {boolean} bidderWon - Whether the bidder made their bid
      */
-    updatePlayerHandStats(hand) {
+    updatePlayerHandStats(hand, bidderWon = false) {
         if (!this.currentGame) return;
 
         try {
             for (const player of this.currentGame.players) {
                 const meld = hand.playerMeld[player.id] || 0;
-                const score = hand.playerScores[player.id] || 0;
-                const handTotal = meld + score;
-                const bid = player.id === hand.bidderId ? hand.winningBid : null;
+                const tricks = hand.playerScores[player.id] || 0;
+                const handTotal = meld + tricks;
+                const isBidder = player.id === hand.bidderId;
+                const bid = isBidder ? hand.winningBid : null;
+                const bidSuccessful = isBidder ? bidderWon : null;
 
+                // Call the updateHandStats method on the Player object
+                player.updateHandStats(meld, handTotal, tricks, bid, bidSuccessful);
+                
+                // Update the stored player data
                 this.playerController.updatePlayerStats(player.id, {
-                    totalMeld: player.totalMeld + meld,
-                    highestHand: Math.max(player.highestHand, handTotal),
-                    highestBid: bid ? Math.max(player.highestBid, bid) : player.highestBid
+                    totalMeld: player.totalMeld,
+                    handsPlayed: player.handsPlayed,
+                    totalBids: player.totalBids,
+                    successfulBids: player.successfulBids,
+                    totalTricks: player.totalTricks,
+                    highestHand: player.highestHand,
+                    highestBid: player.highestBid
                 });
             }
         } catch (error) {

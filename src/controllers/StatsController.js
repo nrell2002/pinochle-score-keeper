@@ -86,7 +86,9 @@ class StatsController {
     renderPlayerStats(player) {
         const winRate = player.getWinRate();
         const avgScore = player.getAverageScore();
-        const avgMeld = player.getAverageMeld();
+        const avgMeldPerHand = player.getAverageMeldPerHand();
+        const biddingSuccessRate = player.getBiddingSuccessRate();
+        const avgTricksPerHand = player.getAverageTricksPerHand();
 
         return `
             <div class="player-stats-card">
@@ -104,12 +106,24 @@ class StatsController {
                     <span class="stat-value">${Format.percentage(winRate)}</span>
                 </div>
                 <div class="stat-row">
+                    <span class="stat-label">Hands Played:</span>
+                    <span class="stat-value">${Format.number(player.handsPlayed)}</span>
+                </div>
+                <div class="stat-row">
                     <span class="stat-label">Average Score:</span>
                     <span class="stat-value">${Format.number(avgScore)}</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Average Meld:</span>
-                    <span class="stat-value">${Format.number(avgMeld)}</span>
+                    <span class="stat-label">Average Meld per Hand:</span>
+                    <span class="stat-value">${Format.number(avgMeldPerHand)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Bidding Success Rate:</span>
+                    <span class="stat-value">${Format.percentage(biddingSuccessRate)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Avg Tricks per Hand:</span>
+                    <span class="stat-value">${Format.number(avgTricksPerHand)}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Highest Hand:</span>
@@ -190,11 +204,16 @@ class StatsController {
                 gamesWon: player.gamesWon,
                 winRate: player.getWinRate(),
                 averageScore: player.getAverageScore(),
-                averageMeld: player.getAverageMeld(),
+                handsPlayed: player.handsPlayed,
+                averageMeldPerHand: player.getAverageMeldPerHand(),
+                biddingSuccessRate: player.getBiddingSuccessRate(),
+                avgTricksPerHand: player.getAverageTricksPerHand(),
                 highestHand: player.highestHand,
                 highestBid: player.highestBid,
                 totalScore: player.totalScore,
-                totalMeld: player.totalMeld
+                totalMeld: player.totalMeld,
+                totalBids: player.totalBids,
+                successfulBids: player.successfulBids
             })),
             gameHistory: gameHistory.map(game => ({
                 id: game.id,
@@ -246,8 +265,9 @@ class StatsController {
             averageScoreLeader: activePlayers.reduce((prev, current) => 
                 (prev.getAverageScore() > current.getAverageScore()) ? prev : current
             ),
-            averageMeldLeader: activePlayers.reduce((prev, current) => 
-                (prev.getAverageMeld() > current.getAverageMeld()) ? prev : current
+            bestBidder: activePlayers.filter(p => p.totalBids > 0).reduce((prev, current) => 
+                (prev.getBiddingSuccessRate() > current.getBiddingSuccessRate()) ? prev : current, 
+                activePlayers.find(p => p.totalBids > 0) || activePlayers[0]
             )
         };
     }
@@ -265,7 +285,11 @@ class StatsController {
                 totalScore: 0,
                 highestHand: 0,
                 highestBid: 0,
-                totalMeld: 0
+                totalMeld: 0,
+                handsPlayed: 0,
+                totalBids: 0,
+                successfulBids: 0,
+                totalTricks: 0
             });
         });
 
