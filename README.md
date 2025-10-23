@@ -1,15 +1,17 @@
 # 🃏 Pinochle Score Keeper
 
-Keep score of your pinochle game(s)! A responsive web application that works perfectly on both desktop and mobile devices.
+Keep score of your pinochle game(s)! A responsive web application that works perfectly on both desktop and mobile devices, **now available as a native iOS app for the Apple App Store!**
 
 ## 🆕 Recent Updates
 
-**Version 1.0 - Modular Architecture Refactor**
+**Version 1.0 - Modular Architecture Refactor & iOS App Store Support**
 - Completely refactored from monolithic vanilla JavaScript to modern modular architecture
+- **🍎 Added complete iOS App Store deployment support with Cordova integration**
+- **📱 Native mobile app with offline functionality and service worker support**
 - Improved maintainability and extensibility for team development
 - Enhanced error handling and user experience
 - Full backward compatibility maintained
-- Ready for marketplace deployment
+- Ready for marketplace deployment (iOS App Store ready!)
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 
