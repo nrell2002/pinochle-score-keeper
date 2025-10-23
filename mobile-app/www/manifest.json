@@ -1,0 +1,17 @@
+{
+  "name": "Pinochle Score Keeper",
+  "short_name": "Pinochle",
+  "description": "Keep track of your pinochle game scores and player statistics",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ecf0f1",
+  "theme_color": "#2c3e50",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMyYzNlNTAiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xNiA2aC0xVjVjMC0xLjEtLjktMi0yLTJIOWMtMS4xIDAtMiAuOS0yIDJ2MUg2Yy0xLjEgMC0yIC45LTIgMnY5YzAgMS4xLjkgMiAyIDJoMTBjMS4xIDAgMi0uOSAyLTJWOGMwLTEuMS0uOS0yLTItMnpNOSA1aDRjLjU1IDAgMSAuNDUgMSAxdjFIOFY2YzAtLjU1LjQ1LTEgMS0xek0xNiA4djNIMTNWOGgzek0xMSAxMUg4VjhoM3Yzek0xNiAxNEgxM3YtM2gzdjN6TTExIDE0SDh2LTNoM3Yzek0xNiAxN0g2VjhIMTN2OWgzeiIvPgo8L3N2Zz4KPC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
