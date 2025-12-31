@@ -1,20 +1,27 @@
 {
   "name": "pinochle-score-keeper",
   "version": "1.0.0",
-  "description": "A responsive web application for keeping track of pinochle game scores and player statistics",
+  "description": "A responsive web application and iOS mobile app for keeping track of pinochle game scores and player statistics",
   "main": "index.html",
   "scripts": {
     "dev": "python3 -m http.server 8080",
     "lint": "eslint src/**/*.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "setup-ios": "./setup-ios.sh"
   },
   "keywords": [
     "pinochle",
     "card-game",
     "score-keeper",
-    "game-tracker"
+    "game-tracker",
+    "mobile-app",
+    "ios",
+    "cordova",
+    "progressive-web-app",
+    "pwa",
+    "app-store"
   ],
   "author": "nrell2002",
   "license": "MIT",

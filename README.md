@@ -1,15 +1,17 @@
 # 🃏 Pinochle Score Keeper
 
-Keep score of your pinochle game(s)! A responsive web application that works perfectly on both desktop and mobile devices.
+Keep score of your pinochle game(s)! A responsive web application that works perfectly on both desktop and mobile devices, **now available as a native iOS app for the Apple App Store!**
 
 ## 🆕 Recent Updates
 
-**Version 1.0 - Modular Architecture Refactor**
+**Version 1.0 - Modular Architecture Refactor & iOS App Store Support**
 - Completely refactored from monolithic vanilla JavaScript to modern modular architecture
+- **🍎 Added complete iOS App Store deployment support with Cordova integration**
+- **📱 Native mobile app with offline functionality and service worker support**
 - Improved maintainability and extensibility for team development
 - Enhanced error handling and user experience
 - Full backward compatibility maintained
-- Ready for marketplace deployment
+- Ready for marketplace deployment (iOS App Store ready!)
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.
 
@@ -129,12 +131,41 @@ This structure enables:
 4. Add appropriate tests
 
 ### Roadmap
+- [x] iOS App Store deployment support
 - [ ] Unit testing suite
 - [ ] Tournament mode
 - [ ] Advanced statistics
-- [ ] Offline PWA capabilities
+- [x] Offline PWA capabilities
 - [ ] Cloud sync (premium feature)
 - [ ] Theme customization
+
+## iOS App Store Deployment
+
+**🎉 NEW: iOS App Store Support!**
+
+The Pinochle Score Keeper is now ready for deployment to the Apple App Store! 
+
+### Quick Start (iOS)
+1. Run the setup script: `./setup-ios.sh`
+2. Transfer to macOS with Xcode installed
+3. Build and submit: `npm run build:release`
+4. Open in Xcode and archive for App Store Connect
+
+### Detailed Instructions
+See [IOS_DEPLOYMENT_GUIDE.md](IOS_DEPLOYMENT_GUIDE.md) for complete step-by-step instructions including:
+- Apple Developer Account setup
+- App Store Connect configuration
+- Build and submission process
+- App review guidelines compliance
+- Marketing and maintenance tips
+
+### Mobile App Structure
+```
+mobile-app/                    # Cordova/iOS project
+├── config.xml                # iOS app configuration
+├── res/ios/                  # App icons and splash screens
+└── www/                      # Web app with mobile optimizations
+```
 
 ## License
 

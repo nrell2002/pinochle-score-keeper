@@ -19,6 +19,13 @@ build/
 *.tgz
 *.tar.gz
 
+# Cordova/iOS build artifacts
+mobile-app/platforms/
+mobile-app/plugins/
+mobile-app/node_modules/
+mobile-app/www/cordova*
+mobile-app/www/plugins/
+
 # Logs
 logs
 *.log
